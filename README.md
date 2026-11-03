@@ -60,8 +60,10 @@ Electron + React + TypeScript + ProseMirror. A paginação está em `src/editor/
 
 Guias de estrutura para longas e séries, revisões com cores, relatório de personagens e locais, colaboração.
 
-## Licenças
+## Licença
 
-Todo o código de terceiros incluído é de código aberto com licenças que permitem uso comercial e redistribuição (MIT para React, ProseMirror e Electron; SIL Open Font License 1.1 para as fontes Courier Prime e IBM Plex Sans). Os textos completos estão em `TERCEIROS.txt`, que vai com o instalador, e em `LICENSE.electron.txt` / `LICENSES.chromium.html`, que o Electron junta automaticamente. Não apagues estes ficheiros: mantê-los é o que estas licenças pedem em troca.
+O Cena Um é software livre, distribuído sob a [GNU GPL 3.0](LICENSE). Podes usá-lo, estudá-lo, alterá-lo e partilhá-lo. Quem distribuir uma versão alterada tem de a publicar também sob a GPL 3.0, com o código aberto.
 
-O código próprio do Cena Um ainda não tem licença pública escolhida (`"license": "UNLICENSED"` no package.json), o que significa todos os direitos reservados até decidires.
+© 2026 Alexandre Serras.
+
+O programa inclui componentes de código aberto de terceiros, com licenças compatíveis: MIT (React, ProseMirror, Electron) e SIL Open Font License 1.1 (fontes Courier Prime e IBM Plex Sans). Os textos completos estão em [`TERCEIROS.txt`](TERCEIROS.txt), que acompanha o instalador, e em `LICENSE.electron.txt` / `LICENSES.chromium.html`, na pasta de instalação.
