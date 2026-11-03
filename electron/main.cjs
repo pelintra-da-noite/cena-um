@@ -12,6 +12,16 @@ let ficheiroInicial = null;
 let podeFechar = false;
 let porGuardar = false;
 
+// ---------- registo de erros (ajuda a diagnosticar problemas no PC de quem usa) ----------
+function registar(...partes) {
+  try {
+    const linha = `[${new Date().toISOString()}] ${partes.map((x) => (x && x.stack) || String(x)).join(' ')}\n`;
+    fs.appendFileSync(path.join(app.getPath('userData'), 'registo.txt'), linha);
+  } catch {}
+}
+process.on('uncaughtException', (e) => registar('erro:', e));
+process.on('unhandledRejection', (e) => registar('promessa rejeitada:', e));
+
 // ---------- utilitários ----------
 function lerRecentes() {
   try { return JSON.parse(fs.readFileSync(RECENTES(), 'utf8')); } catch { return []; }
@@ -89,7 +99,24 @@ function criarJanela() {
     if (r === 1) { podeFechar = true; janela.close(); }
   });
 
-  janela.once('ready-to-show', () => janela.show());
+  const mostrar = () => { if (janela && !janela.isDestroyed() && !janela.isVisible()) janela.show(); };
+  janela.once('ready-to-show', mostrar);
+  // Rede de segurança: se o evento não chegar, a janela aparece na mesma
+  setTimeout(mostrar, 3000);
+
+  janela.webContents.on('render-process-gone', (_e, d) => {
+    registar('interface terminou:', d.reason, d.exitCode);
+    if (d.reason !== 'clean-exit' && janela && !janela.isDestroyed()) janela.reload();
+  });
+  janela.webContents.on('did-fail-load', (_e, codigo, descricao) => registar('falha a carregar:', codigo, descricao));
+
+  // Ao fechar a janela principal, o programa termina mesmo (nada fica a correr às escondidas)
+  janela.on('closed', () => {
+    janela = null;
+    for (const w of BrowserWindow.getAllWindows()) w.destroy();
+    app.quit();
+  });
+
   janela.loadFile(DIST);
 }
 
@@ -186,6 +213,7 @@ ipcMain.handle('pdf:exportar', async (_e, dados) => {
   dadosImpressao = dados;
   const w = new BrowserWindow({
     show: false,
+    parent: janela, // fecha-se sempre com a janela principal
     width: 900,
     height: 1200,
     webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true }
@@ -205,9 +233,12 @@ ipcMain.handle('pdf:exportar', async (_e, dados) => {
     fs.writeFileSync(r.filePath, pdf);
     shell.openPath(r.filePath);
     return r.filePath;
+  } catch (e) {
+    registar('exportar PDF:', e);
+    throw e;
   } finally {
     dadosImpressao = null;
-    w.destroy();
+    if (!w.isDestroyed()) w.destroy();
   }
 });
 
@@ -217,11 +248,18 @@ if (!app.requestSingleInstanceLock()) {
 } else {
   app.on('second-instance', (_e, argv) => {
     const f = acharCena(argv);
-    if (janela) {
-      if (janela.isMinimized()) janela.restore();
-      janela.focus();
-      if (f) janela.webContents.send('app:abrir-ficheiro', { caminho: f, conteudo: fs.readFileSync(f, 'utf8') });
+    if (!janela || janela.isDestroyed()) {
+      // havia um processo sem janela: abre-a de novo em vez de não fazer nada
+      podeFechar = false;
+      porGuardar = false;
+      ficheiroInicial = f;
+      criarJanela();
+      return;
     }
+    if (janela.isMinimized()) janela.restore();
+    if (!janela.isVisible()) janela.show();
+    janela.focus();
+    if (f) janela.webContents.send('app:abrir-ficheiro', { caminho: f, conteudo: fs.readFileSync(f, 'utf8') });
   });
   ficheiroInicial = acharCena(process.argv);
   app.whenReady().then(() => {
