@@ -23,11 +23,15 @@ export function paraFdx(doc: PMNode, titulo: string, autor: string): string {
     const textos: string[] = [];
     if (n.childCount === 0) textos.push('<Text></Text>');
     n.forEach((t) => {
-      const estilos = t.marks.map((m) => ({ negrito: 'Bold', italico: 'Italic', sublinhado: 'Underline' } as any)[m.type.name]).filter(Boolean);
+      const estilos = t.marks.map((m) => ({ negrito: 'Bold', italico: 'Italic', sublinhado: 'Underline', riscado: 'Strikeout' } as any)[m.type.name]).filter(Boolean);
       const txt = MAIUSCULAS.includes(el) ? (t.text || '').toUpperCase() : t.text || '';
-      textos.push(`<Text${estilos.length ? ` Style="${estilos.join('+')}"` : ''}>${esc(txt)}</Text>`);
+      const fonte = t.marks.find((m) => m.type.name === 'fonte');
+      const tam = t.marks.find((m) => m.type.name === 'tamanho');
+      const extra = (fonte ? ` Font="${esc(String(fonte.attrs.css).split(',')[0].replace(/['"]/g, '').trim())}"` : '') + (tam ? ` Size="${tam.attrs.pt}"` : '');
+      textos.push(`<Text${estilos.length ? ` Style="${estilos.join('+')}"` : ''}${extra}>${esc(txt)}</Text>`);
     });
-    paras.push(`    <Paragraph Type="${PARA_FDX[el]}">\n      ${textos.join('')}\n    </Paragraph>`);
+    const alin = ({ left: 'Left', center: 'Center', right: 'Right', justify: 'Full' } as any)[n.attrs.alinhamento] || '';
+    paras.push(`    <Paragraph${alin ? ` Alignment="${alin}"` : ''} Type="${PARA_FDX[el]}">\n      ${textos.join('')}\n    </Paragraph>`);
   });
   return `<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 <FinalDraft DocumentType="Script" Template="No" Version="5">
@@ -62,11 +66,15 @@ export function deFdx(xml: string): { doc: any; titulo: string | null } {
       const marks = [
         /Bold/.test(estilo) && { type: 'negrito' },
         /Italic/.test(estilo) && { type: 'italico' },
-        /Underline/.test(estilo) && { type: 'sublinhado' }
+        /Underline/.test(estilo) && { type: 'sublinhado' },
+        /Strikeout/.test(estilo) && { type: 'riscado' }
       ].filter(Boolean);
       nos.push(marks.length ? { type: 'text', text: texto, marks } : { type: 'text', text: texto });
     });
-    blocos.push(bloco(el, nos));
+    const b = bloco(el, nos);
+    const alin = ({ Center: 'center', Right: 'right', Full: 'justify' } as any)[p.getAttribute('Alignment') || ''];
+    if (alin && el !== 'transicao') b.attrs = { ...(b.attrs || {}), alinhamento: alin };
+    blocos.push(b);
   });
   let titulo: string | null = null;
   const tp = d.querySelector('FinalDraft > TitlePage Paragraph Text');

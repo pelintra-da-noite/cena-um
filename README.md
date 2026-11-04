@@ -8,6 +8,8 @@ Programa gratuito de escrita de guiões para cinema, televisão e teatro, feito 
 
 Vai a **[Releases](../../releases)** e descarrega o `Cena-Um-…-instalador.exe` mais recente.
 
+Se já tiveres o Cena Um instalado, o instalador mostra **Atualizar** (versão antiga) ou **Reparar** (mesma versão). Os teus guiões não são tocados.
+
 O instalador ainda não tem assinatura digital. Na primeira vez, o Windows mostra "O Windows protegeu o computador". Para continuar, carrega em **Mais informações** e depois em **Executar mesmo assim**.
 
 ## O que já faz
@@ -16,10 +18,12 @@ O instalador ainda não tem assinatura digital. Na primeira vez, o Windows mostr
 - **Teclado de argumentista**: Tab muda de elemento, Enter avança para o elemento lógico seguinte, Ctrl+1 a Ctrl+6 escolhe o elemento.
 - **Automatismos**: escrever `int.` ou `ext.` cria um cabeçalho; `(` no diálogo cria um parentético; `CORTA PARA:` vira transição.
 - **Autocompletar** personagens, locais e momentos do dia (Enter ou → aceita).
-- **Paginação real** com quebras de página visíveis e **duração estimada** (1 página ≈ 1 minuto), por guião e por cena.
+- **Paginação real** com quebras de página visíveis e **duração estimada** (1 página ≈ 1 minuto), por guião e por cena. Os parágrafos vazios não contam para a duração.
+- **Cenas bem demarcadas**: espaço extra antes de cada cabeçalho e entre a personagem e a fala.
 - **Guia de estrutura** com perguntas por página, só nas curtas-metragens.
 - **Storyboard por cena**: carregar imagens, legendar, reordenar.
 - **Cartaz** do projeto, usado como capa nos recentes e (opcional) na folha de rosto do PDF.
+- **Formatação livre com o botão direito**: tipo de letra, tamanho, cor, negrito, itálico, sublinhado, riscado e alinhamento (esquerda, centro, direita, justificado). A duração estimada não muda com a formatação.
 - **Corretor ortográfico PT-PT** do Windows (botão direito para sugestões).
 - **Papel escuro** opcional para escrever (o PDF sai sempre branco).
 - **Quadro de cenas**: cartões por ato, arrastar e largar para reordenar (o guião acompanha; Ctrl+Z desfaz), atos com nome editável, vistas por personagem e por local.

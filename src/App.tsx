@@ -225,7 +225,9 @@ export default function App() {
 
   return (
     <div className="app">
-      <BarraTitulo ficheiro={ecra === 'editor' ? nomeFicheiro : null} porGuardar={porGuardar} />
+      <BarraTitulo ficheiro={ecra === 'editor' ? nomeFicheiro : null} porGuardar={porGuardar}
+        onGuardar={() => guardarRef.current(false).then((ok) => { if (ok) avisar('Guião guardado.'); })}
+        onGuardarComo={() => guardarRef.current(true).then((ok) => { if (ok) avisar('Guião guardado com outro nome.'); })} />
       {ecra === 'inicio' && (
         <Inicio
           recentes={recentes}

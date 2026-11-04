@@ -1,5 +1,5 @@
 import type { Node as PMNode } from 'prosemirror-model';
-import type { Elemento } from './schema';
+import { tamanhoMaximo, type Elemento } from './schema';
 import type { Papel } from '../types';
 
 /**
@@ -76,32 +76,48 @@ export interface Layout {
 
 const tipoDe = (n: PMNode) => n.type.name as Elemento;
 
+/**
+ * Espaço (em linhas) antes de um bloco no papel. Mais largo do que o formato clássico em dois sítios,
+ * a pedido de quem testou: 2 linhas antes de cada cabeçalho (as cenas destacam-se) e meia linha
+ * entre o nome da personagem e a fala.
+ */
+export function espacoAntes(el: Elemento, anterior: Elemento | null): number {
+  if (!anterior) return 0;
+  if (el === 'cena') return 2;
+  if ((el === 'dialogo' || el === 'parentetico') && anterior === 'personagem') return 0.5;
+  return LINHAS_ANTES[el];
+}
+
 export function calcularLayout(doc: PMNode, papel: Papel): Layout {
   const LP = FORMATO[papel].linhasPagina;
   const nos: PMNode[] = [];
   doc.forEach((n) => { nos.push(n); });
 
-  const corpo = nos.map((n) => contarLinhas(n.textContent, geometria(tipoDe(n), papel).largura));
+  // Linhas que o bloco ocupa no papel, tendo em conta letra maior escolhida no menu de formatação
+  const corpo = nos.map((n) => {
+    const pt = tamanhoMaximo(n);
+    const largura = Math.max(8, Math.floor((geometria(tipoDe(n), papel).largura * 12) / pt));
+    return contarLinhas(n.textContent, largura) * (pt / 12);
+  });
   const paginaDoNo: number[] = new Array(nos.length).fill(0);
   const quebraAntes: boolean[] = new Array(nos.length).fill(false);
-  const linhasNo: number[] = new Array(nos.length).fill(0);
 
   let pagina = 0;
   let usadas = 0;
+  const ant = (i: number): Elemento | null => (i > 0 ? tipoDe(nos[i - 1]) : null);
 
   // Quantas linhas um "grupo" precisa para não ficar órfão no fundo da página
   const necessario = (i: number): number => {
     const el = tipoDe(nos[i]);
     if (el === 'cena') {
-      const seguinte = i + 1 < nos.length ? Math.min(2, corpo[i + 1]) + LINHAS_ANTES[tipoDe(nos[i + 1])] : 0;
+      const seguinte = i + 1 < nos.length ? Math.min(2, corpo[i + 1]) + espacoAntes(tipoDe(nos[i + 1]), el) : 0;
       return corpo[i] + seguinte;
     }
     if (el === 'personagem') {
-      // personagem + parentéticos/diálogos que se seguem
       let total = corpo[i];
       let j = i + 1;
       while (j < nos.length && (tipoDe(nos[j]) === 'dialogo' || tipoDe(nos[j]) === 'parentetico')) {
-        total += corpo[j];
+        total += corpo[j] + espacoAntes(tipoDe(nos[j]), tipoDe(nos[j - 1]));
         j++;
       }
       return Math.min(total, LP);
@@ -111,23 +127,35 @@ export function calcularLayout(doc: PMNode, papel: Papel): Layout {
 
   for (let i = 0; i < nos.length; i++) {
     const el = tipoDe(nos[i]);
-    const antes = usadas === 0 ? 0 : LINHAS_ANTES[el];
+    const antes = usadas === 0 ? 0 : espacoAntes(el, ant(i));
     const dentroDeGrupo = el === 'dialogo' || el === 'parentetico';
     const precisa = dentroDeGrupo ? corpo[i] : necessario(i);
-    if (usadas > 0 && usadas + antes + precisa > LP && !(dentroDeGrupo && usadas + corpo[i] <= LP)) {
+    if (usadas > 0 && usadas + antes + precisa > LP && !(dentroDeGrupo && usadas + antes + corpo[i] <= LP)) {
       pagina++;
       usadas = 0;
       quebraAntes[i] = true;
     }
-    const espaco = usadas === 0 ? 0 : LINHAS_ANTES[el];
+    const espaco = usadas === 0 ? 0 : espacoAntes(el, ant(i));
     usadas += espaco + corpo[i];
-    linhasNo[i] = espaco + corpo[i];
     paginaDoNo[i] = pagina;
     while (usadas > LP) { pagina++; usadas -= LP; } // bloco maior que uma página
   }
-
   const paginas = nos.length ? pagina + 1 : 1;
-  const minutos = nos.length ? pagina + Math.max(usadas, 1) / LP : 0;
+
+  // Duração: só conta o que está escrito, no formato clássico (1 página ≈ 1 minuto).
+  // Parágrafos vazios, letra maior e espaços extra são escolhas visuais e não alongam o filme.
+  const linhasNo: number[] = new Array(nos.length).fill(0);
+  let anteriorEscrito: Elemento | null = null;
+  let totalDuracao = 0;
+  nos.forEach((n, i) => {
+    const el = tipoDe(n);
+    if (!n.textContent.trim()) return;
+    const base = contarLinhas(n.textContent, geometria(el, papel).largura);
+    linhasNo[i] = base + (anteriorEscrito ? LINHAS_ANTES[el] : 0);
+    totalDuracao += linhasNo[i];
+    anteriorEscrito = el;
+  });
+  const minutos = totalDuracao / LP;
 
   // Cenas, personagens e locais
   const cenas: CenaInfo[] = [];
@@ -151,8 +179,8 @@ export function calcularLayout(doc: PMNode, papel: Papel): Layout {
       if (local) locaisSet.add(local);
     }
     linhasCena += linhasNo[i];
-    if (el === 'dialogo' || el === 'parentetico' || el === 'personagem') linhasDialogo += corpo[i];
-    if (el === 'acao') linhasAcao += corpo[i];
+    if (el === 'dialogo' || el === 'parentetico' || el === 'personagem') linhasDialogo += linhasNo[i];
+    if (el === 'acao') linhasAcao += linhasNo[i];
     if (el === 'personagem') {
       const nome = nomePersonagem(n.textContent);
       if (nome) {

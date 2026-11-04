@@ -57,25 +57,20 @@ function criarJanela() {
   // Corretor ortográfico em português de Portugal
   try { janela.webContents.session.setSpellCheckerLanguages(['pt-PT']); } catch (e) { /* macOS ignora */ }
 
+  // Botão direito: no guião, a interface mostra o seu próprio menu (formatação + corretor);
+  // nos outros campos, mostra-se o menu nativo.
   janela.webContents.on('context-menu', (_e, params) => {
-    const itens = [];
-    if (params.misspelledWord) {
-      const sugestoes = params.dictionarySuggestions.slice(0, 6);
-      if (sugestoes.length === 0) itens.push({ label: 'Sem sugestões', enabled: false });
-      for (const s of sugestoes) itens.push({ label: s, click: () => janela.webContents.replaceMisspelling(s) });
-      itens.push({ type: 'separator' });
-      itens.push({ label: 'Adicionar ao dicionário', click: () => janela.webContents.session.addWordToSpellCheckerDictionary(params.misspelledWord) });
-      itens.push({ type: 'separator' });
-    }
+    ultimosParams = params;
     if (params.isEditable) {
-      itens.push({ label: 'Cortar', role: 'cut', enabled: params.editFlags.canCut });
-      itens.push({ label: 'Copiar', role: 'copy', enabled: params.editFlags.canCopy });
-      itens.push({ label: 'Colar', role: 'paste', enabled: params.editFlags.canPaste });
-      itens.push({ label: 'Selecionar tudo', role: 'selectAll' });
+      janela.webContents.send('menu:contexto', {
+        x: params.x, y: params.y,
+        palavra: params.misspelledWord || '',
+        sugestoes: (params.dictionarySuggestions || []).slice(0, 5),
+        podeCortar: params.editFlags.canCut, podeCopiar: params.editFlags.canCopy, podeColar: params.editFlags.canPaste
+      });
     } else if (params.selectionText) {
-      itens.push({ label: 'Copiar', role: 'copy' });
+      menuNativo(params);
     }
-    if (itens.length) Menu.buildFromTemplate(itens).popup({ window: janela });
   });
 
   janela.webContents.setWindowOpenHandler(({ url }) => {
@@ -119,6 +114,41 @@ function criarJanela() {
 
   janela.loadFile(DIST);
 }
+
+// ---------- menu de contexto ----------
+let ultimosParams = null;
+function menuNativo(params) {
+  if (!janela || !params) return;
+  const itens = [];
+  if (params.misspelledWord) {
+    const sugestoes = params.dictionarySuggestions.slice(0, 6);
+    if (sugestoes.length === 0) itens.push({ label: 'Sem sugestões', enabled: false });
+    for (const s of sugestoes) itens.push({ label: s, click: () => janela.webContents.replaceMisspelling(s) });
+    itens.push({ type: 'separator' });
+    itens.push({ label: 'Adicionar ao dicionário', click: () => janela.webContents.session.addWordToSpellCheckerDictionary(params.misspelledWord) });
+    itens.push({ type: 'separator' });
+  }
+  if (params.isEditable) {
+    itens.push({ label: 'Cortar', role: 'cut', enabled: params.editFlags.canCut });
+    itens.push({ label: 'Copiar', role: 'copy', enabled: params.editFlags.canCopy });
+    itens.push({ label: 'Colar', role: 'paste', enabled: params.editFlags.canPaste });
+    itens.push({ label: 'Selecionar tudo', role: 'selectAll' });
+  } else if (params.selectionText) {
+    itens.push({ label: 'Copiar', role: 'copy' });
+  }
+  if (itens.length) Menu.buildFromTemplate(itens).popup({ window: janela });
+}
+ipcMain.on('menu:nativo', () => menuNativo(ultimosParams));
+ipcMain.on('ortografia:substituir', (_e, palavra) => { if (janela) janela.webContents.replaceMisspelling(palavra); });
+ipcMain.on('ortografia:adicionar', (_e, palavra) => { if (janela) janela.webContents.session.addWordToSpellCheckerDictionary(palavra); });
+ipcMain.on('editar', (_e, acao) => {
+  if (!janela) return;
+  const wc = janela.webContents;
+  if (acao === 'cortar') wc.cut();
+  else if (acao === 'copiar') wc.copy();
+  else if (acao === 'colar') wc.paste();
+  else if (acao === 'tudo') wc.selectAll();
+});
 
 // ---------- IPC ----------
 ipcMain.handle('app:ficheiro-inicial', () => {

@@ -58,6 +58,16 @@ export interface Definicoes {
   ajustar?: boolean; // limita o zoom à largura do ecrã
 }
 
+export interface DadosMenuContexto {
+  x: number;
+  y: number;
+  palavra: string;
+  sugestoes: string[];
+  podeCortar: boolean;
+  podeCopiar: boolean;
+  podeColar: boolean;
+}
+
 export interface FicheiroLido {
   caminho: string;
   conteudo: string;
@@ -83,6 +93,11 @@ declare global {
       fecharAgora(): void;
       aoGuardarEFechar(fn: () => void): void;
       aoAbrirFicheiro(fn: (f: FicheiroLido) => void): void;
+      aoMenuContexto(fn: (d: DadosMenuContexto) => void): () => void;
+      menuNativo(): void;
+      substituirPalavra(p: string): void;
+      adicionarPalavra(p: string): void;
+      editar(acao: 'cortar' | 'copiar' | 'colar' | 'tudo'): void;
     };
   }
 }

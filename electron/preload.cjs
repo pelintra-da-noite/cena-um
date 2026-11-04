@@ -17,5 +17,14 @@ contextBridge.exposeInMainWorld('cena', {
   porGuardar: (valor) => ipcRenderer.send('doc:por-guardar', valor),
   fecharAgora: () => ipcRenderer.send('app:fechar-agora'),
   aoGuardarEFechar: (fn) => ipcRenderer.on('app:guardar-e-fechar', () => fn()),
-  aoAbrirFicheiro: (fn) => ipcRenderer.on('app:abrir-ficheiro', (_e, f) => fn(f))
+  aoAbrirFicheiro: (fn) => ipcRenderer.on('app:abrir-ficheiro', (_e, f) => fn(f)),
+  aoMenuContexto: (fn) => {
+    const h = (_e, d) => fn(d);
+    ipcRenderer.on('menu:contexto', h);
+    return () => ipcRenderer.removeListener('menu:contexto', h);
+  },
+  menuNativo: () => ipcRenderer.send('menu:nativo'),
+  substituirPalavra: (p) => ipcRenderer.send('ortografia:substituir', p),
+  adicionarPalavra: (p) => ipcRenderer.send('ortografia:adicionar', p),
+  editar: (acao) => ipcRenderer.send('editar', acao)
 });

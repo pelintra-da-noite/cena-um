@@ -10,6 +10,8 @@ import VistaQuadro from './VistaQuadro';
 import VistaStoryboard from './VistaStoryboard';
 import VistaTecnico from './VistaTecnico';
 import Confirmar, { PedidoConfirmacao } from '../components/Confirmar';
+import MenuFormatacao from '../components/MenuFormatacao';
+import type { DadosMenuContexto } from '../types';
 import {
   ICasa, IGuiao, IQuadro, IStoryboard, ITecnico, IDefinicoes, IProcura, ICima, IBaixo, IFoco, IFechar, IVisto
 } from '../components/Icones';
@@ -90,6 +92,22 @@ export default function Editor(props: Props) {
     const ro = new ResizeObserver(() => setLarguraArea(el.clientWidth));
     ro.observe(el);
     return () => ro.disconnect();
+  }, []);
+
+  // ---------- botão direito: menu de formatação no guião, menu normal no resto ----------
+  const [menuCtx, setMenuCtx] = useState<DadosMenuContexto | null>(null);
+  const vistaRef = useRef(vista);
+  vistaRef.current = vista;
+  useEffect(() => {
+    let alvo: EventTarget | null = null;
+    const regista = (e: MouseEvent) => { alvo = e.target; };
+    window.addEventListener('contextmenu', regista, true);
+    const largar = window.cena.aoMenuContexto((d) => {
+      const noGuiao = alvo instanceof Node && !!montagem.current?.contains(alvo) && vistaRef.current === 'guiao';
+      if (noGuiao) setMenuCtx(d);
+      else window.cena.menuNativo();
+    });
+    return () => { window.removeEventListener('contextmenu', regista, true); largar(); };
   }, []);
 
   useEffect(() => {
@@ -371,6 +389,7 @@ export default function Editor(props: Props) {
         <VistaTecnico estado={estado} layout={layout} projeto={projeto} onProjeto={onProjeto} onIrParaCena={irParaCena}
           onExportar={() => props.onExportar(true)} confirmar={confirmar} />
       )}
+      {menuCtx && view && <MenuFormatacao view={view} dados={menuCtx} papelEscuro={definicoes.papelEscuro} onFechar={() => setMenuCtx(null)} />}
       {confirmacao && <Confirmar pedido={confirmacao} onFechar={() => setConfirmacao(null)} />}
 
       {/* Visor de storyboard */}

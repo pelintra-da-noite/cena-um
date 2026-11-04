@@ -25,7 +25,7 @@ export function definirElemento(el: Elemento): Cmd {
     if (!node || node.type.name === el) return false;
     if (dispatch) {
       const id = node.attrs.id || (el === 'cena' ? novoId() : null);
-      const tr = state.tr.setNodeMarkup(inicio, schema.nodes[el], { id });
+      const tr = state.tr.setNodeMarkup(inicio, schema.nodes[el], { ...node.attrs, id });
       if (el === 'parentetico' && node.textContent === '') {
         tr.insertText('()', inicio + 1);
         tr.setSelection(TextSelection.create(tr.doc, inicio + 2));
@@ -212,20 +212,20 @@ const automatismos = new Plugin({
       if (el === 'cena') {
         if (!node.attrs.id || vistos.has(node.attrs.id)) {
           tr = tr || state.tr;
-          tr.setNodeMarkup(pos, undefined, { id: novoId() });
+          tr.setNodeMarkup(pos, undefined, { ...node.attrs, id: novoId() });
         } else vistos.add(node.attrs.id);
       }
       if (pos !== blocoCursor) return;
       // só no momento em que se escreve o prefixo, para respeitar quem muda o elemento à mão
       if (el === 'acao' && /^(INT\.?\/EXT\.|EXT\.?\/INT\.|I\/E\.|INT\.|EXT\.) $/i.test(txt)) {
         tr = tr || state.tr;
-        tr.setNodeMarkup(pos, schema.nodes.cena, { id: node.attrs.id || novoId() });
+        tr.setNodeMarkup(pos, schema.nodes.cena, { ...node.attrs, id: node.attrs.id || novoId() });
       } else if (el === 'acao' && /^[A-ZÀ-Ý ]{2,}(PARA|A NEGRO|OUT|IN):$/.test(txt)) {
         tr = tr || state.tr;
-        tr.setNodeMarkup(pos, schema.nodes.transicao, { id: node.attrs.id });
+        tr.setNodeMarkup(pos, schema.nodes.transicao, { ...node.attrs });
       } else if (el === 'dialogo' && txt === '(') {
         tr = tr || state.tr;
-        tr.setNodeMarkup(pos, schema.nodes.parentetico, { id: node.attrs.id });
+        tr.setNodeMarkup(pos, schema.nodes.parentetico, { ...node.attrs });
         tr.insertText(')', pos + 2);
         tr.setSelection(TextSelection.create(tr.doc, pos + 2));
       }

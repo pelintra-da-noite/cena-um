@@ -24,6 +24,10 @@ function conteudo(n: PMNode) {
       if (m.type.name === 'negrito') el = <strong>{el}</strong>;
       if (m.type.name === 'italico') el = <em>{el}</em>;
       if (m.type.name === 'sublinhado') el = <u>{el}</u>;
+      if (m.type.name === 'riscado') el = <s>{el}</s>;
+      if (m.type.name === 'fonte') el = <span style={{ fontFamily: m.attrs.css }}>{el}</span>;
+      if (m.type.name === 'tamanho') el = <span style={{ fontSize: `${m.attrs.pt}pt`, lineHeight: `${m.attrs.pt}pt` }}>{el}</span>;
+      if (m.type.name === 'cor') el = <span style={{ color: m.attrs.valor }}>{el}</span>;
     }
     partes.push(<React.Fragment key={i}>{el}</React.Fragment>);
   });
@@ -120,7 +124,7 @@ export default function VistaImpressao() {
           {blocos.map(({ node, i }, k) => {
             const el = node.type.name as Elemento;
             return (
-              <p key={i} className={`el el-${el}${k === 0 ? ' primeiro' : ''}`}>
+              <p key={i} className={`el el-${el}${k === 0 ? ' primeiro' : ''}`} style={node.attrs.alinhamento ? { textAlign: node.attrs.alinhamento } : undefined}>
                 {el === 'cena' && d.numeros && <span className="ncena e">{numeros[i]}</span>}
                 {conteudo(node)}
                 {el === 'cena' && d.numeros && <span className="ncena d">{numeros[i]}</span>}

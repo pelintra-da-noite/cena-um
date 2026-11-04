@@ -1,7 +1,7 @@
 {
   "name": "cena-um",
   "productName": "Cena Um",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "Cena Um — escrita de guiões para cinema, televisão e teatro",
   "author": "Alexandre Serras",
   "main": "electron/main.cjs",
@@ -72,7 +72,7 @@
     "nsis": {
       "oneClick": false,
       "perMachine": false,
-      "allowToChangeInstallationDirectory": true,
+      "allowToChangeInstallationDirectory": false,
       "createDesktopShortcut": true,
       "shortcutName": "Cena Um",
       "installerLanguages": [
@@ -80,7 +80,8 @@
       ],
       "language": "2070",
       "artifactName": "Cena-Um-${version}-instalador.${ext}",
-      "uninstallDisplayName": "Cena Um"
+      "uninstallDisplayName": "Cena Um",
+      "include": "build/installer.nsh"
     },
     "publish": null,
     "extraFiles": [
