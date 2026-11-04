@@ -17,6 +17,15 @@ export interface Plano {
   duracao: string; // segundos, texto livre
 }
 
+export interface PersonagemInfo {
+  nome: string; // sempre em maiúsculas
+  descricao: string;
+  manual: boolean; // acrescentada à mão (pode não ter falas)
+}
+
+export type CategoriaLevantamento =
+  'figurantes' | 'aderecos' | 'guardaRoupa' | 'caracterizacao' | 'cenografia' | 'veiculos' | 'animais' | 'efeitos' | 'som' | 'notas';
+
 export interface MetaProjeto {
   titulo: string;
   tipo: TipoProjeto;
@@ -38,6 +47,8 @@ export interface Projeto {
   guiao: any; // JSON do documento ProseMirror
   storyboard: Record<string, Quadro[]>; // por id de cena
   tecnico?: Record<string, Plano[]>; // guião técnico, por id de cena
+  personagens?: PersonagemInfo[];
+  levantamento?: Record<string, Partial<Record<CategoriaLevantamento, string[]>>>; // por id de cena
 }
 
 export interface Recente {

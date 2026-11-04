@@ -3,14 +3,19 @@ import { EditorState, TextSelection } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import type { Definicoes, Projeto, Quadro } from '../types';
 import { schema, ELEMENTOS, Elemento, rotulo, novoId } from '../editor/schema';
-import { criarPlugins, paginasKey, definirElemento, blocoAtual, mudarPapel } from '../editor/plugins';
+import { criarPlugins, paginasKey, definirElemento, blocoAtual, mudarPapel, mudarPersonagensExtra } from '../editor/plugins';
 import { FORMATO, formatarSegundos, formatarTempo, Layout } from '../editor/layout';
 import { reduzirImagem } from '../io/imagens';
 import VistaQuadro from './VistaQuadro';
 import VistaStoryboard from './VistaStoryboard';
 import VistaTecnico from './VistaTecnico';
+import VistaPersonagens from './VistaPersonagens';
+import VistaLevantamento from './VistaLevantamento';
 import Confirmar, { PedidoConfirmacao } from '../components/Confirmar';
 import MenuFormatacao from '../components/MenuFormatacao';
+import PainelHistorico from '../components/PainelHistorico';
+import { Historico, Momento } from '../editor/historico';
+import { undo, redo, undoDepth, redoDepth } from 'prosemirror-history';
 import type { DadosMenuContexto } from '../types';
 import {
   ICasa, IGuiao, IQuadro, IStoryboard, ITecnico, IDefinicoes, IProcura, ICima, IBaixo, IFoco, IFechar, IVisto
@@ -25,7 +30,7 @@ interface Props {
   onDefinicoes: (d: Partial<Definicoes>) => void;
   onInicio: () => void;
   onAbrirDefinicoes: () => void;
-  onExportar: (tecnico?: boolean) => void;
+  onExportar: (tipo?: 'guiao' | 'tecnico' | 'levantamento') => void;
   avisar: (t: string) => void;
 }
 
@@ -52,7 +57,7 @@ export default function Editor(props: Props) {
   const [procura, setProcura] = useState('');
   const [foco, setFoco] = useState(false);
   const [visor, setVisor] = useState<{ cenaId: string; i: number } | null>(null);
-  const [vista, setVista] = useState<'guiao' | 'quadro' | 'storyboard' | 'tecnico'>('guiao');
+  const [vista, setVista] = useState<'guiao' | 'quadro' | 'storyboard' | 'tecnico' | 'personagens' | 'levantamento'>('guiao');
   const [confirmacao, setConfirmacao] = useState<PedidoConfirmacao | null>(null);
   const confirmar = (titulo: string, texto: string, acao: () => void) => setConfirmacao({
     titulo, texto, botoes: [{ rotulo: 'Cancelar', acao: () => {} }, { rotulo: 'Continuar', principal: true, acao }]
@@ -61,6 +66,12 @@ export default function Editor(props: Props) {
   alteradoRef.current = props.onAlterado;
 
   // ---------- montar o ProseMirror ----------
+  // ---------- histórico de momentos ----------
+  const [, setVersaoHistorico] = useState(0);
+  const [verHistorico, setVerHistorico] = useState(false);
+  const historicoRef = useRef<Historico | null>(null);
+  if (!historicoRef.current) historicoRef.current = new Historico(() => setVersaoHistorico((n) => n + 1));
+
   useEffect(() => {
     const doc = schema.nodeFromJSON(projeto.guiao);
     const inicial = EditorState.create({ doc, plugins: criarPlugins(definicoes.papel) });
@@ -68,22 +79,44 @@ export default function Editor(props: Props) {
       state: inicial,
       attributes: { spellcheck: 'true', lang: 'pt-PT', 'aria-label': 'Guião', role: 'textbox', 'aria-multiline': 'true' },
       dispatchTransaction(tr) {
-        const novo = view.state.apply(tr);
+        const antes = view.state;
+        const novo = antes.apply(tr);
         view.updateState(novo);
         setEstado(novo);
-        if (tr.docChanged) alteradoRef.current();
+        if (tr.docChanged) {
+          alteradoRef.current();
+          historicoRef.current!.transacao(tr, antes, () => view.state);
+        }
       }
     });
     viewRef.current = view;
     setEstado(inicial);
+    historicoRef.current!.registar('Abriste o guião', inicial.doc);
     // cursor no fim do documento
     const fim = TextSelection.atEnd(view.state.doc);
     view.dispatch(view.state.tr.setSelection(fim));
     view.focus();
-    return () => { view.destroy(); viewRef.current = null; };
+    return () => { historicoRef.current?.limpar(); view.destroy(); viewRef.current = null; };
   }, []); // eslint-disable-line
 
+  const voltarA = (m: Momento) => {
+    const v = viewRef.current;
+    if (!v) return;
+    historicoRef.current!.descarregar();
+    const hora = new Date(m.hora).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+    const tr = v.state.tr.replaceWith(0, v.state.doc.content.size, m.doc.content);
+    tr.setSelection(TextSelection.atStart(tr.doc));
+    tr.setMeta('rotulo', `Voltaste ao momento das ${hora} («${m.rotulo}»)`);
+    v.dispatch(tr);
+    v.focus();
+  };
+  const desfazer = () => { const v = viewRef.current; if (v) { undo(v.state, v.dispatch); v.focus(); } };
+  const refazer = () => { const v = viewRef.current; if (v) { redo(v.state, v.dispatch); v.focus(); } };
+
   useEffect(() => { if (viewRef.current) mudarPapel(viewRef.current, definicoes.papel); }, [definicoes.papel, viewRef]);
+  // personagens acrescentadas à mão também entram no autocompletar
+  const nomesManuais = (projeto.personagens || []).filter((p) => p.manual).map((p) => p.nome).join('|');
+  useEffect(() => { if (viewRef.current) mudarPersonagensExtra(viewRef.current, nomesManuais ? nomesManuais.split('|') : []); }, [nomesManuais, viewRef, estado === null]);
 
   const [larguraArea, setLarguraArea] = useState(0);
   useEffect(() => {
@@ -227,6 +260,12 @@ export default function Editor(props: Props) {
         <button aria-label="Quadro de cenas" title="Quadro de cenas" className={vista === 'quadro' ? 'ativo' : ''} onClick={() => irPara('quadro')}><IQuadro /></button>
         <button aria-label="Storyboard" title="Storyboard" className={vista === 'storyboard' ? 'ativo' : ''} onClick={() => irPara('storyboard')}><IStoryboard /></button>
         <button aria-label="Guião técnico" title="Guião técnico" className={vista === 'tecnico' ? 'ativo' : ''} onClick={() => irPara('tecnico')}><ITecnico /></button>
+        <button aria-label="Personagens" title="Personagens" className={vista === 'personagens' ? 'ativo' : ''} onClick={() => irPara('personagens')}>
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5" /><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5" /><path d="M16 4.6a3.5 3.5 0 010 6.8M18 14.8c1.8.7 3 2.4 3.5 5.2" /></svg>
+        </button>
+        <button aria-label="Levantamento" title="Levantamento" className={vista === 'levantamento' ? 'ativo' : ''} onClick={() => irPara('levantamento')}>
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2" /><path d="M9 4V3h6v1M9 10h6M9 14h6M9 18h3" /></svg>
+        </button>
         <span className="espaco" />
         <button aria-label="Definições" title="Definições" onClick={props.onAbrirDefinicoes}><IDefinicoes /></button>
       </nav>
@@ -275,7 +314,21 @@ export default function Editor(props: Props) {
           </div>
           <span className="dica-teclas">Tab muda de elemento · Enter avança</span>
           <span className="flex1" />
-          <button className="btn btn-claro" onClick={() => props.onExportar(false)}>Exportar</button>
+          <div className="grupo-historico">
+            <button className="btn-icone" aria-label="Desfazer" title="Desfazer (Ctrl+Z)" disabled={!estado || undoDepth(estado) === 0}
+              onMouseDown={(e) => e.preventDefault()} onClick={desfazer}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 14L4 9l5-5" /><path d="M4 9h11a5 5 0 010 10h-3" /></svg>
+            </button>
+            <button className="btn-icone" aria-label="Refazer" title="Refazer (Ctrl+Y)" disabled={!estado || redoDepth(estado) === 0}
+              onMouseDown={(e) => e.preventDefault()} onClick={refazer}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M15 14l5-5-5-5" /><path d="M20 9H9a5 5 0 000 10h3" /></svg>
+            </button>
+            <button className={'btn-icone' + (verHistorico ? ' ativo' : '')} aria-label="Histórico" title="Histórico de alterações" data-abre-historico
+              aria-expanded={verHistorico} onClick={() => { historicoRef.current!.descarregar(); setVerHistorico((x) => !x); }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 103-6.7L3 8" /><path d="M3 3v5h5" /><path d="M12 7v5l3 2" /></svg>
+            </button>
+          </div>
+          <button className="btn btn-claro" onClick={() => props.onExportar('guiao')}>Exportar</button>
         </div>
 
         <div className="area-papel" ref={areaRef} onMouseDown={(e) => { if (e.target === e.currentTarget) view?.focus(); }}>
@@ -387,9 +440,32 @@ export default function Editor(props: Props) {
       )}
       {vista === 'tecnico' && estado && layout && (
         <VistaTecnico estado={estado} layout={layout} projeto={projeto} onProjeto={onProjeto} onIrParaCena={irParaCena}
-          onExportar={() => props.onExportar(true)} confirmar={confirmar} />
+          onExportar={() => props.onExportar('tecnico')} confirmar={confirmar} />
       )}
-      {menuCtx && view && <MenuFormatacao view={view} dados={menuCtx} papelEscuro={definicoes.papelEscuro} onFechar={() => setMenuCtx(null)} />}
+      {vista === 'personagens' && estado && layout && (
+        <VistaPersonagens estado={estado} layout={layout} projeto={projeto} papel={definicoes.papel} onProjeto={onProjeto}
+          onIrParaCena={irParaCena} avisar={avisar} />
+      )}
+      {vista === 'levantamento' && estado && layout && (
+        <VistaLevantamento estado={estado} layout={layout} projeto={projeto} papel={definicoes.papel} onProjeto={onProjeto}
+          onIrParaCena={irParaCena} onExportar={() => props.onExportar('levantamento')} />
+      )}
+      {verHistorico && estado && vista === 'guiao' && (
+        <PainelHistorico momentos={historicoRef.current!.momentos} docAtual={estado.doc}
+          onVoltar={(m) => voltarA(m)} onFechar={() => setVerHistorico(false)} />
+      )}
+      {menuCtx && view && <MenuFormatacao view={view} dados={menuCtx} papelEscuro={definicoes.papelEscuro} onFechar={() => setMenuCtx(null)}
+        onJuntarLevantamento={(cat, texto) => {
+          const id = cenaAtual?.id;
+          if (!id) { avisar('Põe o cursor dentro de uma cena para juntar ao levantamento.'); return; }
+          onProjeto((p) => {
+            const l = (p.levantamento || {})[id] || {};
+            const atual = l[cat] || [];
+            if (atual.some((x) => x.toLowerCase() === texto.toLowerCase())) return p;
+            return { ...p, levantamento: { ...(p.levantamento || {}), [id]: { ...l, [cat]: [...atual, texto] } } };
+          });
+          avisar(`«${texto}» juntado ao levantamento da cena ${cenaAtual!.numero}.`);
+        }} />}
       {confirmacao && <Confirmar pedido={confirmacao} onFechar={() => setConfirmacao(null)} />}
 
       {/* Visor de storyboard */}

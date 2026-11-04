@@ -5,7 +5,7 @@ import { documentoInicial } from './editor/schema';
 import { calcularLayout } from './editor/layout';
 import { deFdx, deFountain, paraFdx, paraFountain, validarDoc } from './io/formatos';
 import { reduzirImagem } from './io/imagens';
-import { paraCsv } from './io/tecnico';
+import { paraCsv, levantamentoCsv } from './io/tecnico';
 import Inicio from './screens/Inicio';
 import Editor from './screens/Editor';
 import NovoProjeto from './screens/NovoProjeto';
@@ -31,7 +31,7 @@ export default function App() {
   const [sessao, setSessao] = useState(0);
   const [definicoes, setDefinicoes] = useState<Definicoes>(lerDefinicoes);
   const [dialogo, setDialogo] = useState<null | 'novo' | 'definicoes' | 'exportar'>(null);
-  const [exportarTecnico, setExportarTecnico] = useState(false);
+  const [exportarTipo, setExportarTipo] = useState<'guiao' | 'tecnico' | 'levantamento'>('guiao');
   const [tipoInicial, setTipoInicial] = useState<TipoProjeto>('curta');
   const [recentes, setRecentes] = useState<Recente[]>([]);
   const [aviso, setAviso] = useState<string | null>(null);
@@ -173,6 +173,18 @@ export default function App() {
           modo: tec ? 'tecnico' : 'guiao', paisagem: tec, tecnico: p.tecnico || {}, storyboard: tec ? p.storyboard : {}
         });
         if (r) avisar(tec ? 'Guião técnico exportado em PDF.' : 'PDF exportado.');
+      } else if (op.formato === 'lev-pdf') {
+        const r = await window.cena.exportarPdf({
+          nomeSugerido: `${nome} — levantamento`, papel: definicoes.papel, guiao: p.guiao, meta: p.meta,
+          rosto: false, cartaz: false, numeros: true, modo: 'levantamento', paisagem: true,
+          personagens: p.personagens || [], levantamento: p.levantamento || {}
+        });
+        if (r) avisar('Levantamento exportado em PDF.');
+      } else if (op.formato === 'lev-csv') {
+        const r = await window.cena.exportarTexto({
+          conteudo: levantamentoCsv(p, definicoes.papel), nomeSugerido: `${nome} — levantamento`, extensao: 'csv', nomeFormato: 'Folha de cálculo'
+        });
+        if (r) avisar('Levantamento exportado para folha de cálculo.');
       } else if (op.formato === 'csv') {
         const r = await window.cena.exportarTexto({
           conteudo: paraCsv(p, definicoes.papel), nomeSugerido: `${nome} — guião técnico`, extensao: 'csv', nomeFormato: 'Folha de cálculo'
@@ -215,7 +227,7 @@ export default function App() {
       if (k === 's') { e.preventDefault(); if (estadoRef.current.projeto) guardarRef.current(e.shiftKey); }
       else if (k === 'o') { e.preventDefault(); abrir(); }
       else if (k === 'n') { e.preventDefault(); setTipoInicial('curta'); setDialogo('novo'); }
-      else if (k === 'p') { e.preventDefault(); if (estadoRef.current.projeto && ecra === 'editor') { setExportarTecnico(false); setDialogo('exportar'); } }
+      else if (k === 'p') { e.preventDefault(); if (estadoRef.current.projeto && ecra === 'editor') { setExportarTipo('guiao'); setDialogo('exportar'); } }
     };
     window.addEventListener('keydown', tecla);
     return () => window.removeEventListener('keydown', tecla);
@@ -249,7 +261,7 @@ export default function App() {
           onDefinicoes={(d) => setDefinicoes((x) => ({ ...x, ...d }))}
           onInicio={() => { const p = projetoAtual(); if (p) setProjeto(p); setEcra('inicio'); atualizarRecentes(); }}
           onAbrirDefinicoes={() => setDialogo('definicoes')}
-          onExportar={(tec) => { setExportarTecnico(!!tec); setDialogo('exportar'); }}
+          onExportar={(tipo) => { setExportarTipo(tipo || 'guiao'); setDialogo('exportar'); }}
           avisar={avisar}
         />
       )}
@@ -267,7 +279,7 @@ export default function App() {
           onMeta={(m) => { setProjeto((p) => (p ? { ...p, meta: { ...p.meta, ...m } } : p)); setPorGuardar(true); }} />
       )}
       {dialogo === 'exportar' && projeto && (
-        <DialogoExportar temCartaz={!!projeto.meta.cartaz} papel={definicoes.papel} onExportar={exportar} onFechar={() => setDialogo(null)} tecnico={exportarTecnico} />
+        <DialogoExportar temCartaz={!!projeto.meta.cartaz} papel={definicoes.papel} onExportar={exportar} onFechar={() => setDialogo(null)} inicial={exportarTipo} />
       )}
       {confirmacao && <Confirmar pedido={confirmacao} onFechar={() => setConfirmacao(null)} />}
       {aviso && <div className="aviso" role="status"><span className="ponto" style={{ background: 'var(--ambar)' }} />{aviso}</div>}

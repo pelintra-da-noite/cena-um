@@ -2,6 +2,8 @@ import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { EditorView } from 'prosemirror-view';
 import type { DadosMenuContexto } from '../types';
 import { FONTES, TAMANHOS, CORES, Alinhamento } from '../editor/schema';
+import { CATEGORIAS } from '../editor/levantamento';
+import type { CategoriaLevantamento } from '../types';
 import { lerFormatacao, alternarMarca, definirValor, definirAlinhamento, limparFormatacao } from '../editor/formatacao';
 
 interface Props {
@@ -9,6 +11,7 @@ interface Props {
   dados: DadosMenuContexto;
   papelEscuro: boolean;
   onFechar: () => void;
+  onJuntarLevantamento?: (cat: CategoriaLevantamento, texto: string) => void;
 }
 
 const sem = (e: React.MouseEvent) => e.preventDefault(); // não roubar a seleção ao editor
@@ -27,7 +30,7 @@ const IconeAlinhar = ({ tipo }: { tipo: Exclude<Alinhamento, null> }) => {
   );
 };
 
-export default function MenuFormatacao({ view, dados, papelEscuro, onFechar }: Props) {
+export default function MenuFormatacao({ view, dados, papelEscuro, onFechar, onJuntarLevantamento }: Props) {
   const caixa = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState({ left: dados.x, top: dados.y });
   const [, refrescar] = useState(0);
@@ -127,6 +130,22 @@ export default function MenuFormatacao({ view, dados, papelEscuro, onFechar }: P
           </label>
         </div>
       </div>
+
+      {onJuntarLevantamento && (() => {
+        const { from, to, empty } = view.state.selection;
+        const texto = empty ? '' : view.state.doc.textBetween(from, to, ' ').trim();
+        if (!texto || texto.length > 80) return null;
+        return (
+          <div className="mf-secao">
+            <div className="mf-rotulo">Juntar «{texto.length > 28 ? texto.slice(0, 27) + '…' : texto}» ao levantamento como</div>
+            <div className="mf-lev">
+              {CATEGORIAS.filter((c) => c.id !== 'notas').map((c) => (
+                <button key={c.id} onMouseDown={sem} onClick={fechar(() => onJuntarLevantamento(c.id, texto))}>{c.nome}</button>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
 
       <div className="mf-rodape">
         <button disabled={!dados.podeCortar} onMouseDown={sem} onClick={fechar(() => window.cena.editar('cortar'))}>Cortar</button>

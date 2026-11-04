@@ -65,6 +65,7 @@ export function lerFormatacao(state: EditorState): EstadoFormatacao {
 
 function aplicar(view: EditorView, f: (tr: Transaction, z: { from: number; to: number } | null) => void) {
   const tr = view.state.tr;
+  tr.setMeta('rotulo', 'Mudaste a formatação');
   f(tr, alvo(view.state));
   view.dispatch(tr);
   view.focus();

@@ -2,7 +2,9 @@ import React, { useEffect, useState } from 'react';
 import type { Node as PMNode } from 'prosemirror-model';
 import { schema, Elemento } from '../editor/schema';
 import { calcularLayout, FORMATO } from '../editor/layout';
-import type { MetaProjeto, Papel, Plano, Quadro } from '../types';
+import type { MetaProjeto, Papel, Plano, Quadro, PersonagemInfo, Projeto } from '../types';
+import { analisar, CATEGORIAS, formatarOitavos, titulo as tituloLev } from '../editor/levantamento';
+import { formatarSegundos } from '../editor/layout';
 
 interface Dados {
   guiao: any;
@@ -11,7 +13,9 @@ interface Dados {
   rosto: boolean;
   cartaz: boolean;
   numeros: boolean;
-  modo?: 'guiao' | 'tecnico';
+  modo?: 'guiao' | 'tecnico' | 'levantamento';
+  personagens?: PersonagemInfo[];
+  levantamento?: Projeto['levantamento'];
   tecnico?: Record<string, Plano[]>;
   storyboard?: Record<string, Quadro[]>;
 }
@@ -47,6 +51,67 @@ export default function VistaImpressao() {
   const doc = schema.nodeFromJSON(d.guiao);
   const layout = calcularLayout(doc, d.papel);
   const fmt = FORMATO[d.papel];
+
+  if (d.modo === 'levantamento') {
+    const projetoParcial = { personagens: d.personagens || [], levantamento: d.levantamento || {} } as Projeto;
+    const { cenas, personagens } = analisar(doc, layout, projetoParcial, d.papel);
+    const locais = new Map<string, typeof cenas>();
+    cenas.forEach((c) => locais.set(c.local, [...(locais.get(c.local) || []), c]));
+    return (
+      <div className="impressao">
+        <style>{`@page { size: ${d.papel === 'carta' ? 'letter' : 'A4'} landscape; margin: .5in; } html, body, #root { height: auto; overflow: visible; background: #fff; }`}</style>
+        <section className="pagina paisagem">
+          <div className="tp-cab"><b>{d.meta.titulo || 'Sem título'} — levantamento</b><span>{d.meta.autor} · {cenas.length} cenas · {formatarOitavos(cenas.reduce((x, c) => x + c.oitavos, 0))} páginas</span></div>
+          <table className="tp">
+            <thead><tr>
+              <th style={{ width: '5%' }}>Cena</th><th style={{ width: '24%' }}>Cabeçalho</th><th style={{ width: '7%' }}>Int/Ext</th><th style={{ width: '9%' }}>Momento</th>
+              <th style={{ width: '7%' }}>Págs.</th><th style={{ width: '18%' }}>Personagens</th><th>Elementos de produção</th>
+            </tr></thead>
+            <tbody>
+              {cenas.map((c) => (
+                <tr key={c.id}>
+                  <td><b>{c.numero}</b></td>
+                  <td className="ac">{c.cabecalho}</td>
+                  <td>{c.intExt}</td><td>{tituloLev(c.momento)}</td><td>{formatarOitavos(c.oitavos)}</td>
+                  <td>{c.falam.map(tituloLev).join(', ')}{c.aparecem.length ? <div style={{ color: '#555' }}>sem falas: {c.aparecem.map(tituloLev).join(', ')}</div> : null}</td>
+                  <td>{CATEGORIAS.filter((k) => (c.elementos[k.id] || []).length).map((k) => (
+                    <div key={k.id}><b>{k.nome}:</b> {(c.elementos[k.id] || []).join(', ')}</div>
+                  ))}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div className="tp-cena" style={{ marginTop: '18pt' }}>
+            <h3>Por local</h3>
+            <table className="tp">
+              <thead><tr><th>Local</th><th style={{ width: '12%' }}>Int/Ext</th><th style={{ width: '18%' }}>Momentos</th><th style={{ width: '9%' }}>Págs.</th><th style={{ width: '11%' }}>Duração</th><th style={{ width: '22%' }}>Cenas</th></tr></thead>
+              <tbody>
+                {[...locais.entries()].map(([l, cs]) => (
+                  <tr key={l}><td><b>{tituloLev(l)}</b></td><td>{[...new Set(cs.map((c) => c.intExt))].join(', ')}</td>
+                    <td>{[...new Set(cs.map((c) => tituloLev(c.momento)))].join(', ')}</td>
+                    <td>{formatarOitavos(cs.reduce((x, c) => x + c.oitavos, 0))}</td>
+                    <td>{formatarSegundos(cs.reduce((x, c) => x + c.segundos, 0))}</td>
+                    <td>{cs.map((c) => c.numero).join(', ')}</td></tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="tp-cena">
+            <h3>Por personagem</h3>
+            <table className="tp">
+              <thead><tr><th>Personagem</th><th style={{ width: '8%' }}>Falas</th><th style={{ width: '30%' }}>Cenas com falas</th><th style={{ width: '30%' }}>Cenas sem falas</th></tr></thead>
+              <tbody>
+                {personagens.map((p) => (
+                  <tr key={p.nome}><td><b>{tituloLev(p.nome)}</b>{p.descricao ? <div style={{ color: '#555' }}>{p.descricao}</div> : null}</td>
+                    <td>{p.falas}</td><td>{p.cenasComFalas.join(', ') || '—'}</td><td>{p.cenasSemFalas.join(', ') || '—'}</td></tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    );
+  }
 
   if (d.modo === 'tecnico') {
     const estilo = { ['--larg-in' as any]: fmt.alturaIn, ['--alt-in' as any]: fmt.larguraIn };

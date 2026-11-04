@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { EditorState } from 'prosemirror-state';
 import type { EditorView } from 'prosemirror-view';
 import type { Projeto } from '../types';
@@ -24,6 +24,40 @@ export default function VistaQuadro({ view, estado, layout, projeto, onProjeto, 
   const [modo, setModo] = useState<Modo>('ato');
   const [arrasto, setArrasto] = useState<string | null>(null);
   const [alvo, setAlvo] = useState<{ col: number; antes: string | null } | null>(null);
+
+  // ---------- scroll automático enquanto se arrasta ----------
+  // Perto do topo/fundo de uma coluna, a coluna anda; perto das laterais do quadro, o quadro anda.
+  const ponteiro = useRef<{ x: number; y: number } | null>(null);
+  const colunasRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!arrasto) { ponteiro.current = null; return; }
+    let raf = 0;
+    const ZONA = 80;
+    const velocidade = (dist: number) => Math.ceil(((ZONA - dist) / ZONA) * 18) + 2;
+    const passo = () => {
+      const p = ponteiro.current;
+      if (p) {
+        const debaixo = document.elementFromPoint(p.x, p.y) as HTMLElement | null;
+        const lista = debaixo?.closest('.coluna')?.querySelector('.coluna-lista') as HTMLElement | null;
+        if (lista) {
+          const r = lista.getBoundingClientRect();
+          if (p.y < r.top + ZONA) lista.scrollTop -= velocidade(Math.max(0, p.y - r.top));
+          else if (p.y > r.bottom - ZONA) lista.scrollTop += velocidade(Math.max(0, r.bottom - p.y));
+        }
+        const cont = colunasRef.current;
+        if (cont) {
+          const r = cont.getBoundingClientRect();
+          if (p.x < r.left + ZONA) cont.scrollLeft -= velocidade(Math.max(0, p.x - r.left));
+          else if (p.x > r.right - ZONA) cont.scrollLeft += velocidade(Math.max(0, r.right - p.x));
+        }
+      }
+      raf = requestAnimationFrame(passo);
+    };
+    raf = requestAnimationFrame(passo);
+    const mover = (e: DragEvent) => { if (e.clientX || e.clientY) ponteiro.current = { x: e.clientX, y: e.clientY }; };
+    window.addEventListener('dragover', mover, true);
+    return () => { cancelAnimationFrame(raf); window.removeEventListener('dragover', mover, true); };
+  }, [arrasto]);
 
   const blocos = useMemo(() => dividirEmCenas(estado.doc).cenas, [estado.doc]);
   const info = useMemo(() => new Map(layout.cenas.map((c) => [c.id, c])), [layout]);
@@ -105,7 +139,7 @@ export default function VistaQuadro({ view, estado, layout, projeto, onProjeto, 
       {blocos.length === 0 ? (
         <div className="vista-vazia">Ainda não há cenas. Escreve um cabeçalho (INT. ou EXT.) no guião e as cenas aparecem aqui.</div>
       ) : (
-        <div className="colunas" onDragEnd={() => { setArrasto(null); setAlvo(null); }}>
+        <div className="colunas" ref={colunasRef} onDragEnd={() => { setArrasto(null); setAlvo(null); }}>
           {colunas.map((c, col) => {
             const segundos = c.ids.reduce((s, id) => s + (info.get(id)?.segundos || 0), 0);
             return (
@@ -135,6 +169,7 @@ export default function VistaQuadro({ view, estado, layout, projeto, onProjeto, 
                         <article className={'cartao-cena' + (arrasto === id ? ' a-arrastar' : '')}
                           draggable={modo === 'ato'}
                           onDragStart={(e) => { setArrasto(id); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', id); }}
+                          onDrag={(e) => { if (e.clientX || e.clientY) ponteiro.current = { x: e.clientX, y: e.clientY }; }}
                           onDragOver={(e) => sobreCartao(e, col, id, c.ids)}
                           onDrop={(e) => { e.preventDefault(); e.stopPropagation(); largar(); }}>
                           <div className="cartao-sb">

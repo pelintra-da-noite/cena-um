@@ -551,3 +551,74 @@ input.nome-ato:focus { border-color: var(--ambar); background: var(--fundo-1); }
   color: var(--texto-2); font-size: 12px; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
 }
 .btn-titulo:hover { background: var(--superficie); color: var(--texto); border-color: var(--linha-3); }
+
+/* ===== Desfazer / refazer / histórico ===== */
+.grupo-historico { display: flex; gap: 2px; margin-right: 8px; padding-right: 8px; border-right: 1px solid var(--linha-2); }
+.grupo-historico .btn-icone.ativo { background: #2E3036; color: var(--ambar); }
+.painel-historico {
+  position: fixed; right: 310px; top: 92px; width: 380px; max-height: calc(100vh - 140px); z-index: 85;
+  background: #1E1F23; border: 1px solid #33353C; border-radius: 12px; box-shadow: 0 18px 50px rgba(0,0,0,.55);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.ph-cab { display: flex; gap: 10px; align-items: flex-start; padding: 14px 14px 10px; border-bottom: 1px solid #2A2C32; }
+.ph-cab > div { flex: 1; }
+.ph-sub { font-size: 11px; color: var(--texto-3); line-height: 16px; margin-top: 3px; }
+.ph-lista { list-style: none; margin: 0; padding: 6px; overflow-y: auto; }
+.ph-item { display: flex; gap: 10px; align-items: center; padding: 8px; border-radius: 8px; }
+.ph-item:hover { background: var(--fundo-3); }
+.ph-item.atual { background: rgba(230,168,74,.08); }
+.ph-hora { font-family: var(--guiao); font-size: 11px; color: var(--texto-3); width: 58px; flex-shrink: 0; }
+.ph-texto { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; font-size: 12px; }
+.ph-texto small { color: var(--texto-4); font-size: 11px; }
+.ph-agora { font-size: 11px; color: var(--ambar); font-weight: 600; padding: 0 6px; }
+.ph-item .btn { height: 28px; }
+@media (max-width: 1360px) { .painel-historico { right: 280px; } }
+
+/* ===== Personagens ===== */
+.form-personagem { display: flex; gap: 8px; }
+.form-personagem .entrada { height: 34px; width: 220px; font-size: 13px; }
+.form-personagem .btn { height: 34px; }
+.grelha-personagens { flex: 1; overflow-y: auto; padding: 16px 24px 8px; display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; align-content: start; }
+.cartao-personagem { background: var(--fundo-2); border: 1px solid var(--linha); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.cp-cab { display: flex; gap: 12px; align-items: center; }
+.cp-cab b { font-size: 15px; }
+.cp-inicial { width: 38px; height: 38px; border-radius: 19px; background: rgba(230,168,74,.14); color: var(--ambar); display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 16px; flex-shrink: 0; }
+.cp-desc { width: 100%; resize: vertical; border-radius: 8px; border: 1px solid var(--linha-2); background: var(--fundo-1); color: var(--texto); padding: 8px 10px; font-size: 12px; line-height: 17px; outline: none; user-select: text; }
+.cp-desc:focus { border-color: var(--ambar); }
+.cp-cenas { display: flex; gap: 10px; align-items: baseline; }
+.cp-cenas > span { width: 118px; flex-shrink: 0; }
+.cp-cenas > div { display: flex; flex-wrap: wrap; gap: 4px; }
+.chip-cena { min-width: 26px; height: 22px; border-radius: 6px; border: 1px solid var(--linha-3); background: var(--fundo-1); color: var(--texto-2); font-size: 11px; font-family: var(--guiao); padding: 0 5px; }
+.chip-cena:hover { border-color: var(--ambar); color: var(--texto); }
+.nota-rodape { padding: 8px 24px 16px; font-size: 11px; color: var(--texto-4); }
+
+/* ===== Levantamento ===== */
+.etiqueta { font-size: 11px; padding: 3px 8px; border-radius: 6px; background: var(--fundo-1); border: 1px solid var(--linha-3); color: var(--texto-2); white-space: nowrap; }
+.lev-personagens { display: flex; gap: 12px; align-items: flex-start; margin-top: 12px; }
+.grelha-lev { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 16px; margin-top: 10px; }
+.campo-lev { display: flex; gap: 12px; align-items: flex-start; padding: 4px 0; }
+.campo-lev-rot { width: 120px; flex-shrink: 0; font-size: 12px; color: var(--texto-3); padding-top: 4px; }
+.campo-lev.cheio .campo-lev-rot { color: var(--texto); }
+.campo-lev-chips { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.campo-lev-chips input {
+  flex: 1; min-width: 120px; height: 26px; border: 1px dashed transparent; border-radius: 6px; background: transparent; color: var(--texto);
+  font-size: 12px; padding: 0 6px; outline: none; user-select: text;
+}
+.campo-lev-chips input::placeholder { color: var(--texto-4); }
+.campo-lev-chips input:hover { border-color: var(--linha-3); }
+.campo-lev-chips input:focus { border-color: var(--ambar); border-style: solid; background: var(--fundo-1); }
+.chip-lev { display: inline-flex; align-items: center; gap: 4px; height: 24px; padding: 0 8px; border-radius: 12px; background: var(--superficie); border: 1px solid var(--linha-3); font-size: 12px; color: var(--texto-2); }
+.chip-lev.forte { background: rgba(230,168,74,.12); border-color: rgba(230,168,74,.4); color: var(--texto); }
+.chip-lev button { border: 0; background: transparent; color: var(--texto-3); padding: 0 0 0 2px; font-size: 14px; line-height: 1; }
+.chip-lev button:hover { color: var(--erro); }
+.resumo-totais { display: flex; gap: 10px; flex-wrap: wrap; }
+.total { background: var(--fundo-2); border: 1px solid var(--linha); border-radius: 12px; padding: 12px 16px; min-width: 110px; display: flex; flex-direction: column; gap: 2px; }
+.total b { font-size: 24px; font-weight: 500; }
+.total span { font-size: 12px; color: var(--texto-3); }
+.resumo-tit { margin: 0; font-size: 14px; font-weight: 600; }
+@media (max-width: 1360px) { .grelha-lev { grid-template-columns: minmax(0, 1fr); } }
+
+/* Menu: juntar ao levantamento */
+.mf-lev { display: flex; flex-wrap: wrap; gap: 4px; }
+.mf-lev button { height: 24px; border-radius: 12px; border: 1px solid var(--linha-3); background: transparent; color: var(--texto-2); font-size: 11px; padding: 0 9px; }
+.mf-lev button:hover { border-color: var(--ambar); color: var(--texto); }

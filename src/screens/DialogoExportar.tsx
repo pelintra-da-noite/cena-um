@@ -3,7 +3,7 @@ import type { Papel } from '../types';
 import { IFechar } from '../components/Icones';
 
 export interface OpcoesExportar {
-  formato: 'pdf' | 'fdx' | 'fountain' | 'tecnico-pdf' | 'csv';
+  formato: 'pdf' | 'fdx' | 'fountain' | 'tecnico-pdf' | 'csv' | 'lev-pdf' | 'lev-csv';
   rosto: boolean;
   cartaz: boolean;
   numeros: boolean;
@@ -14,7 +14,7 @@ interface Props {
   papel: Papel;
   onExportar: (o: OpcoesExportar) => Promise<void> | void;
   onFechar: () => void;
-  tecnico?: boolean;
+  inicial?: 'guiao' | 'tecnico' | 'levantamento';
 }
 
 const FORMATOS: { id: OpcoesExportar['formato']; nome: string; desc: string }[] = [
@@ -26,9 +26,13 @@ const FORMATOS_TECNICO: typeof FORMATOS = [
   { id: 'tecnico-pdf', nome: 'Guião técnico em PDF', desc: 'Tabela de planos com storyboard, em A4 horizontal.' },
   { id: 'csv', nome: 'Guião técnico em folha de cálculo (.csv)', desc: 'Abre no Excel, Numbers ou Google Sheets.' }
 ];
+const FORMATOS_LEV: typeof FORMATOS = [
+  { id: 'lev-pdf', nome: 'Levantamento em PDF', desc: 'Folha por cena com personagens e elementos, mais o resumo por local.' },
+  { id: 'lev-csv', nome: 'Levantamento em folha de cálculo (.csv)', desc: 'Uma linha por cena, para planear a rodagem.' }
+];
 
-export default function DialogoExportar({ temCartaz, papel, onExportar, onFechar, tecnico }: Props) {
-  const [o, setO] = useState<OpcoesExportar>({ formato: tecnico ? 'tecnico-pdf' : 'pdf', rosto: true, cartaz: false, numeros: true });
+export default function DialogoExportar({ temCartaz, papel, onExportar, onFechar, inicial }: Props) {
+  const [o, setO] = useState<OpcoesExportar>({ formato: inicial === 'tecnico' ? 'tecnico-pdf' : inicial === 'levantamento' ? 'lev-pdf' : 'pdf', rosto: true, cartaz: false, numeros: true });
   const [ocupado, setOcupado] = useState(false);
   const caixa = (chave: 'rosto' | 'cartaz' | 'numeros', rotulo: string, desativado = false) => (
     <label style={{ display: 'flex', gap: 10, alignItems: 'center', fontSize: 13, opacity: desativado ? 0.45 : 1 }}>
@@ -56,6 +60,13 @@ export default function DialogoExportar({ temCartaz, papel, onExportar, onFechar
           ))}
           <div className="sobretitulo" style={{ marginTop: 8 }}>Guião técnico</div>
           {FORMATOS_TECNICO.map((f) => (
+            <button key={f.id} className={'tipo' + (o.formato === f.id ? ' ativo' : '')} style={{ height: 58 }}
+              role="radio" aria-checked={o.formato === f.id} onClick={() => setO({ ...o, formato: f.id })}>
+              <b>{f.nome}</b><small>{f.desc}</small>
+            </button>
+          ))}
+          <div className="sobretitulo" style={{ marginTop: 8 }}>Levantamento</div>
+          {FORMATOS_LEV.map((f) => (
             <button key={f.id} className={'tipo' + (o.formato === f.id ? ' ativo' : '')} style={{ height: 58 }}
               role="radio" aria-checked={o.formato === f.id} onClick={() => setO({ ...o, formato: f.id })}>
               <b>{f.nome}</b><small>{f.desc}</small>

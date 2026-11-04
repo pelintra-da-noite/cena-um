@@ -26,7 +26,10 @@ O instalador ainda não tem assinatura digital. Na primeira vez, o Windows mostr
 - **Formatação livre com o botão direito**: tipo de letra, tamanho, cor, negrito, itálico, sublinhado, riscado e alinhamento (esquerda, centro, direita, justificado). A duração estimada não muda com a formatação.
 - **Corretor ortográfico PT-PT** do Windows (botão direito para sugestões).
 - **Papel escuro** opcional para escrever (o PDF sai sempre branco).
-- **Quadro de cenas**: cartões por ato, arrastar e largar para reordenar (o guião acompanha; Ctrl+Z desfaz), atos com nome editável, vistas por personagem e por local.
+- **Desfazer, refazer e histórico**: botões na barra do guião e um histórico agrupado por momentos (pausas na escrita, mover cenas, formatar, colar) para voltar a qualquer ponto desde que abriste o guião.
+- **Personagens**: ecrã próprio com descrição, falas, cenas onde falam e onde aparecem sem falar; acrescenta personagens que não têm falas.
+- **Levantamento**: por cena (INT/EXT, local, momento, páginas em oitavos, personagens, figurantes, adereços, guarda-roupa, caracterização, cenografia, veículos, animais, efeitos, som) e resumo por local e por personagem; exporta PDF e folha de cálculo. Seleciona uma palavra no guião e usa o botão direito para a juntar ao levantamento.
+- **Quadro de cenas**: cartões por ato, arrastar e largar para reordenar (com scroll automático junto às margens) (o guião acompanha; Ctrl+Z desfaz), atos com nome editável, vistas por personagem e por local.
 - **Storyboard completo**: todas as cenas com as suas imagens, legendas, reordenar e arrastar imagens do Explorador.
 - **Guião técnico**: estrutura gerada do guião (um plano por ação e por fala, storyboard ligado), com escala, movimento, som e duração; exporta PDF horizontal e folha de cálculo (.csv).
 - **Ficheiros**: guarda em `.cena`, gravação automática a cada minuto, exporta PDF, Final Draft (`.fdx`) e Fountain; importa `.fdx` e `.fountain`.

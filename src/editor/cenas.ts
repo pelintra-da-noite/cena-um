@@ -44,6 +44,7 @@ export function reordenarCenas(view: EditorView, ordem: string[]) {
   for (const c of cenas) if (!usados.has(c.id)) nos.push(...c.nos); // nada se perde
   const tr = view.state.tr.replaceWith(0, view.state.doc.content.size, Fragment.from(nos));
   tr.setSelection(TextSelection.atStart(tr.doc));
+  tr.setMeta('rotulo', 'Reorganizaste as cenas no quadro');
   view.dispatch(tr);
 }
 

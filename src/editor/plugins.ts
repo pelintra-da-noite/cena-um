@@ -55,7 +55,7 @@ const MOMENTOS = ['DIA', 'NOITE', 'MANHÃ', 'TARDE', 'FIM DE TARDE', 'MADRUGADA'
 
 export interface Sugestao { resto: string; pos: number; }
 
-export function calcularSugestao(state: EditorState, layout: Layout | null): Sugestao | null {
+export function calcularSugestao(state: EditorState, layout: Layout | null, extra: string[] = []): Sugestao | null {
   if (!layout || !state.selection.empty) return null;
   const { node, fim, el, $from } = blocoAtual(state);
   if (!node || $from.pos !== fim - 1) return null; // só no fim do bloco
@@ -66,7 +66,8 @@ export function calcularSugestao(state: EditorState, layout: Layout | null): Sug
   if (el === 'personagem') {
     if (texto.length < 1) return null;
     const outros = contarOcorrencias(state, nomePersonagem(texto));
-    const cand = layout.personagens.find((p) => p.startsWith(t) && p !== t && !(p === nomePersonagem(texto) && outros <= 1));
+    const todas = [...layout.personagens, ...extra.filter((x) => !layout.personagens.includes(x))];
+    const cand = todas.find((p) => p.startsWith(t) && p !== t && !(p === nomePersonagem(texto) && outros <= 1));
     return cand ? { resto: cand.slice(t.length), pos: $from.pos } : null;
   }
   if (el === 'cena') {
@@ -241,6 +242,7 @@ interface EstadoPaginas {
   papel: Papel;
   layout: Layout;
   sugestao: Sugestao | null;
+  extra: string[]; // personagens acrescentadas à mão (sem falas)
 }
 
 export const paginasKey = new PluginKey<EstadoPaginas>('paginas');
@@ -260,13 +262,14 @@ function paginasPlugin(papelInicial: Papel) {
     state: {
       init(_c, state) {
         const layout = calcularLayout(state.doc, papelInicial);
-        return { papel: papelInicial, layout, sugestao: calcularSugestao(state, layout) };
+        return { papel: papelInicial, layout, sugestao: calcularSugestao(state, layout), extra: [] };
       },
       apply(tr, valor, _velho, novo) {
         const papel: Papel = tr.getMeta('papel') || valor.papel;
+        const extra: string[] = tr.getMeta('personagensExtra') || valor.extra;
         const layout = tr.docChanged || papel !== valor.papel ? calcularLayout(novo.doc, papel) : valor.layout;
-        const sugestao = tr.docChanged || tr.selectionSet || papel !== valor.papel ? calcularSugestao(novo, layout) : valor.sugestao;
-        return { papel, layout, sugestao };
+        const sugestao = tr.docChanged || tr.selectionSet || papel !== valor.papel ? calcularSugestao(novo, layout, extra) : valor.sugestao;
+        return { papel, layout, sugestao, extra };
       }
     },
     props: {
@@ -318,4 +321,8 @@ export function criarPlugins(papel: Papel) {
 
 export function mudarPapel(view: EditorView, papel: Papel) {
   view.dispatch(view.state.tr.setMeta('papel', papel));
+}
+
+export function mudarPersonagensExtra(view: EditorView, nomes: string[]) {
+  view.dispatch(view.state.tr.setMeta('personagensExtra', nomes));
 }
