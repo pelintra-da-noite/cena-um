@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import type { Node as PMNode } from 'prosemirror-model';
 import { schema, Elemento } from '../editor/schema';
-import { calcularLayout, FORMATO } from '../editor/layout';
-import type { MetaProjeto, Papel, Plano, Quadro, PersonagemInfo, Projeto } from '../types';
+import { calcularLayout, FORMATO, definirTeatro } from '../editor/layout';
+import type { MetaProjeto, Papel, Plano, Quadro, PersonagemInfo, Projeto, Departamento } from '../types';
 import { analisar, CATEGORIAS, formatarOitavos, titulo as tituloLev } from '../editor/levantamento';
 import { formatarSegundos } from '../editor/layout';
+import { rostoDe, dataRosto } from '../io/rosto';
 
 interface Dados {
   guiao: any;
@@ -13,7 +14,8 @@ interface Dados {
   rosto: boolean;
   cartaz: boolean;
   numeros: boolean;
-  modo?: 'guiao' | 'tecnico' | 'levantamento';
+  modo?: 'guiao' | 'tecnico' | 'levantamento' | 'equipa';
+  equipa?: Departamento[];
   subtitulo?: string; // séries: "T1 · E02 — Título"
   unidades?: Partial<Dados>[]; // séries: vários episódios num só PDF
   personagens?: PersonagemInfo[];
@@ -62,9 +64,36 @@ export default function VistaImpressao() {
 }
 
 function renderUnidade(d: Dados) {
+  const teatro = d.meta.tipo === 'teatro';
+  definirTeatro(teatro);
   const doc = schema.nodeFromJSON(d.guiao);
   const layout = calcularLayout(doc, d.papel);
   const fmt = FORMATO[d.papel];
+
+  if (d.modo === 'equipa') {
+    const deps = d.equipa || [];
+    return (
+      <div className="impressao">
+        <style>{`@page { size: ${d.papel === 'carta' ? 'letter' : 'A4'} landscape; margin: .5in; } html, body, #root { height: auto; overflow: visible; background: #fff; }`}</style>
+        <section className="pagina paisagem">
+          <div className="tp-cab"><b>{d.meta.titulo || 'Sem título'} — equipa</b><span>{deps.reduce((n, x) => n + x.membros.length, 0)} pessoas · {new Date().toLocaleDateString('pt-PT')}</span></div>
+          {deps.map((dep) => (
+            <div key={dep.id} className="tp-cena">
+              <h3>{dep.nome}</h3>
+              <table className="tp">
+                <thead><tr><th style={{ width: '20%' }}>Função</th><th style={{ width: '20%' }}>Nome</th><th style={{ width: '24%' }}>Contacto</th><th style={{ width: '18%' }}>Residência</th><th>Notas</th></tr></thead>
+                <tbody>
+                  {dep.membros.map((m) => (
+                    <tr key={m.id}><td>{m.funcao}</td><td><b>{m.nome}</b></td><td>{m.contacto}</td><td>{m.residencia}</td><td>{m.notas}</td></tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ))}
+        </section>
+      </div>
+    );
+  }
 
   if (d.modo === 'levantamento') {
     const projetoParcial = { personagens: d.personagens || [], levantamento: d.levantamento || {} } as Projeto;
@@ -186,16 +215,31 @@ function renderUnidade(d: Dados) {
   const comCartaz = d.rosto && d.cartaz && d.meta.cartaz;
 
   return (
-    <div className="impressao">
+    <div className={'impressao' + (teatro ? ' teatro' : '')}>
       <style>{`@page { size: ${d.papel === 'carta' ? 'letter' : 'A4'}; margin: 0; } html, body, #root { height: auto; overflow: visible; background: #fff; }`}</style>
-      {d.rosto && (
-        <section className="pagina rosto" style={estiloPagina}>
-          <div className="t" style={{ marginTop: comCartaz ? '1.2in' : '3in' }}>{d.meta.titulo || 'Sem título'}</div>
-          {d.subtitulo && <div style={{ marginTop: '12pt' }}>{d.subtitulo}</div>}
-          <div style={{ marginTop: '24pt' }}>Escrito por</div>
-          <div style={{ marginTop: '12pt' }}>{d.meta.autor || ''}</div>
-          {comCartaz && <img className="cartaz" style={{ marginTop: '0.8in' }} src={d.meta.cartaz!} alt="" />}
-          <div className="rodape">{new Date().toLocaleDateString('pt-PT', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+      {d.rosto && (() => {
+        const r = rostoDe(d.meta);
+        const comCartazR = (d.cartaz || r.cartaz) && !!d.meta.cartaz;
+        return (
+          <section className="pagina rosto" style={estiloPagina}>
+            <div className="t" style={{ marginTop: comCartazR ? '1.2in' : '3in' }}>{d.meta.titulo || 'Sem título'}</div>
+            {d.subtitulo && <div style={{ marginTop: '12pt' }}>{d.subtitulo}</div>}
+            <div style={{ marginTop: '24pt' }}>{r.credito}</div>
+            {r.autores.split('\n').filter(Boolean).map((a, i) => <div key={i} style={{ marginTop: i ? 0 : '12pt' }}>{a}</div>)}
+            {r.baseadoEm && <div style={{ marginTop: '24pt' }}>{r.baseadoEm}</div>}
+            {comCartazR && <img className="cartaz" style={{ marginTop: '0.6in' }} src={d.meta.cartaz!} alt="" />}
+            <div className="rodape" style={{ whiteSpace: 'pre-line' }}>{r.contacto}{r.direitos ? `\n\n${r.direitos}` : ''}</div>
+            <div className="rodape" style={{ left: 'auto', right: '1in', textAlign: 'right', whiteSpace: 'pre-line' }}>{r.versao ? `${r.versao}\n` : ''}{dataRosto(r)}</div>
+          </section>
+        );
+      })()}
+      {teatro && d.rosto && (layout.personagens.length > 0 || (d.personagens || []).length > 0) && (
+        <section className="pagina elenco" style={estiloPagina}>
+          <div className="el-titulo">PERSONAGENS</div>
+          {[...layout.personagens, ...(d.personagens || []).filter((p) => p.manual && !layout.personagens.includes(p.nome)).map((p) => p.nome)].map((nome) => {
+            const info = (d.personagens || []).find((p) => p.nome === nome);
+            return <p key={nome} className="el-elenco"><b>{nome}</b>{info?.descricao ? `, ${info.descricao}` : ''}</p>;
+          })}
         </section>
       )}
       {paginas.map((blocos, pg) => (

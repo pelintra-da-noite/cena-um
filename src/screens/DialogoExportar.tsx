@@ -12,12 +12,14 @@ export interface OpcoesExportar {
 
 interface Props {
   temCartaz: boolean;
+  cartazPorDefeito?: boolean;
   papel: Papel;
   onExportar: (o: OpcoesExportar) => Promise<void> | void;
   onFechar: () => void;
   inicial?: 'guiao' | 'tecnico' | 'levantamento';
   episodios?: { id: string; rotulo: string }[]; // só nas séries
   episodioAtivo?: string;
+  teatro?: boolean;
 }
 
 const FORMATOS: { id: OpcoesExportar['formato']; nome: string; desc: string }[] = [
@@ -34,8 +36,8 @@ const FORMATOS_LEV: typeof FORMATOS = [
   { id: 'lev-csv', nome: 'Levantamento em folha de cálculo (.csv)', desc: 'Uma linha por cena, para planear a rodagem.' }
 ];
 
-export default function DialogoExportar({ temCartaz, papel, onExportar, onFechar, inicial, episodios, episodioAtivo }: Props) {
-  const [o, setO] = useState<OpcoesExportar>({ formato: inicial === 'tecnico' ? 'tecnico-pdf' : inicial === 'levantamento' ? 'lev-pdf' : 'pdf', rosto: true, cartaz: false, numeros: true });
+export default function DialogoExportar({ temCartaz, cartazPorDefeito, papel, onExportar, onFechar, inicial, episodios, episodioAtivo, teatro }: Props) {
+  const [o, setO] = useState<OpcoesExportar>({ formato: inicial === 'tecnico' ? 'tecnico-pdf' : inicial === 'levantamento' ? 'lev-pdf' : 'pdf', rosto: true, cartaz: !!cartazPorDefeito, numeros: true });
   const [ocupado, setOcupado] = useState(false);
   const [alcance, setAlcance] = useState<'atual' | 'todos' | 'escolher'>('atual');
   const [escolhidos, setEscolhidos] = useState<string[]>(episodioAtivo ? [episodioAtivo] : []);
@@ -89,8 +91,8 @@ export default function DialogoExportar({ temCartaz, papel, onExportar, onFechar
               <b>{f.nome}</b><small>{f.desc}</small>
             </button>
           ))}
-          <div className="sobretitulo" style={{ marginTop: 8 }}>Guião técnico</div>
-          {FORMATOS_TECNICO.map((f) => (
+          {!teatro && <div className="sobretitulo" style={{ marginTop: 8 }}>Guião técnico</div>}
+          {!teatro && FORMATOS_TECNICO.map((f) => (
             <button key={f.id} className={'tipo' + (o.formato === f.id ? ' ativo' : '')} style={{ height: 58 }}
               role="radio" aria-checked={o.formato === f.id} onClick={() => setO({ ...o, formato: f.id })}>
               <b>{f.nome}</b><small>{f.desc}</small>

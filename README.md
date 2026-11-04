@@ -33,6 +33,11 @@ O instalador ainda não tem assinatura digital. Na primeira vez, o Windows mostr
 - **Quadro de cenas**: cartões por ato, arrastar e largar para reordenar (com scroll automático junto às margens) (o guião acompanha; Ctrl+Z desfaz), atos com nome editável, vistas por personagem e por local.
 - **Storyboard completo**: todas as cenas com as suas imagens, legendas, reordenar e arrastar imagens do Explorador.
 - **Guião técnico**: estrutura gerada do guião (um plano por ação e por fala, storyboard ligado), com escala, movimento, som e duração; exporta PDF horizontal e folha de cálculo (.csv).
+- **Peças de teatro** no formato próprio do texto dramático: falas a toda a largura, nome da personagem centrado, didascálias recuadas e em itálico, cabeçalhos de ato/cena centrados e página de personagens no PDF. Sem storyboard nem guião técnico, que não fazem sentido em palco.
+- **Folha de rosto editável** nas definições do projeto: crédito, autoria (vários nomes), «baseado em», versão, data, contactos e direitos, com pré-visualização. Vai para o PDF, o Final Draft e o Fountain.
+- **Tema escuro ou claro** (Definições → Aparência).
+- **Equipa**: ficha técnica por departamentos com funções já preenchidas (cinema/TV ou teatro), onde acrescentas funções e departamentos; nome, contacto, residência e notas por pessoa. Exporta PDF e folha de cálculo.
+- **Personagens em toda a série**: em que episódios cada personagem fala ou aparece, com total de falas e tempo de diálogo.
 - **Ficheiros**: guarda em `.cena`, gravação automática a cada minuto, exporta PDF, Final Draft (`.fdx`) e Fountain; importa `.fdx` e `.fountain`.
 
 ## Imagens

@@ -27,5 +27,6 @@ contextBridge.exposeInMainWorld('cena', {
   menuNativo: () => ipcRenderer.send('menu:nativo'),
   substituirPalavra: (p) => ipcRenderer.send('ortografia:substituir', p),
   adicionarPalavra: (p) => ipcRenderer.send('ortografia:adicionar', p),
-  editar: (acao) => ipcRenderer.send('editar', acao)
+  editar: (acao) => ipcRenderer.send('editar', acao),
+  tema: (t) => ipcRenderer.send('tema', t)
 });

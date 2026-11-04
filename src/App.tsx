@@ -2,10 +2,12 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import type { EditorView } from 'prosemirror-view';
 import type { Definicoes, Projeto, Recente, TipoProjeto, MetaProjeto, Episodio } from './types';
 import { documentoInicial } from './editor/schema';
-import { calcularLayout } from './editor/layout';
+import { calcularLayout, definirTeatro } from './editor/layout';
 import { deFdx, deFountain, paraFdx, paraFountain, validarDoc } from './io/formatos';
 import { reduzirImagem } from './io/imagens';
 import { paraCsv, levantamentoCsv } from './io/tecnico';
+import { rostoDe } from './io/rosto';
+import { equipaDe, equipaCsv } from './io/equipa';
 import { sincronizar, migrarSerie, novoEpisodio, abrirEpisodio, ordenar, codigo, episodioAtivo } from './io/episodios';
 import Inicio from './screens/Inicio';
 import Editor from './screens/Editor';
@@ -50,6 +52,11 @@ export default function App() {
   useEffect(atualizarRecentes, [atualizarRecentes]);
 
   useEffect(() => { localStorage.setItem('cena-um:definicoes', JSON.stringify(definicoes)); }, [definicoes]);
+  useEffect(() => {
+    const t = definicoes.tema || 'escuro';
+    document.documentElement.dataset.tema = t;
+    window.cena.tema(t);
+  }, [definicoes.tema]);
   useEffect(() => { window.cena.porGuardar(porGuardar); }, [porGuardar]);
 
   // ---------- projeto ----------
@@ -240,7 +247,7 @@ export default function App() {
         const gerar = (u: typeof unidades[number]) => {
           const doc = validarDoc(u.guiao);
           const t = u.rotulo ? `${nome} — ${u.rotulo}` : nome;
-          return fdx ? paraFdx(doc, t, p.meta.autor) : paraFountain(doc, t, p.meta.autor);
+          return fdx ? paraFdx(doc, t, p.meta.autor, rostoDe(p.meta)) : paraFountain(doc, t, p.meta.autor, rostoDe(p.meta));
         };
         const ext = fdx ? 'fdx' : 'fountain';
         if (varios) {
@@ -252,6 +259,22 @@ export default function App() {
         }
       }
       setDialogo(null);
+    } catch (e: any) {
+      avisar('A exportação falhou: ' + (e?.message || 'erro desconhecido'));
+    }
+  }, [projetoAtual, definicoes.papel, avisar]);
+
+  const exportarEquipa = useCallback(async (formato: 'pdf' | 'csv', so: boolean) => {
+    const p = projetoAtual();
+    if (!p) return;
+    const deps = equipaDe(p).map((d) => ({ ...d, membros: d.membros.filter((m) => !so || m.nome.trim()) })).filter((d) => d.membros.length);
+    if (!deps.length) { avisar('Ainda não há ninguém na equipa — escreve pelo menos um nome.'); return; }
+    const nome = `${p.meta.titulo || 'Sem título'} — equipa`;
+    try {
+      const r = formato === 'csv'
+        ? await window.cena.exportarTexto({ conteudo: equipaCsv(deps), nomeSugerido: nome, extensao: 'csv', nomeFormato: 'Folha de cálculo' })
+        : await window.cena.exportarPdf({ nomeSugerido: nome, papel: definicoes.papel, meta: p.meta, rosto: false, cartaz: false, numeros: false, modo: 'equipa', paisagem: true, guiao: p.guiao, equipa: deps });
+      if (r) avisar(formato === 'csv' ? 'Equipa exportada para folha de cálculo.' : 'Lista da equipa exportada em PDF.');
     } catch (e: any) {
       avisar('A exportação falhou: ' + (e?.message || 'erro desconhecido'));
     }
@@ -287,6 +310,7 @@ export default function App() {
 
   const nomeFicheiro = caminho ? caminho.split(/[\\/]/).pop()! : projeto ? `${projeto.meta.titulo || 'Sem título'} (não guardado)` : null;
 
+  definirTeatro(projeto?.meta.tipo === 'teatro');
   return (
     <div className="app">
       <BarraTitulo ficheiro={ecra === 'editor' ? nomeFicheiro : null} porGuardar={porGuardar}
@@ -301,6 +325,7 @@ export default function App() {
           onNovo={(t) => { setTipoInicial(t); setDialogo('novo'); }}
           onAbrir={abrir}
           onAbrirRecente={abrirRecente}
+          onDefinicoes={() => setDialogo('definicoes')}
         />
       )}
       {ecra === 'editor' && projeto && (
@@ -317,6 +342,7 @@ export default function App() {
           onExportar={(tipo) => { setExportarTipo(tipo || 'guiao'); setDialogo('exportar'); }}
           avisar={avisar}
           onTrocarEpisodio={trocarEpisodio}
+          onExportarEquipa={exportarEquipa}
           onAlterarEpisodios={alterarEpisodios}
         />
       )}
@@ -334,7 +360,7 @@ export default function App() {
           onMeta={(m) => { setProjeto((p) => (p ? { ...p, meta: { ...p.meta, ...m } } : p)); setPorGuardar(true); }} />
       )}
       {dialogo === 'exportar' && projeto && (
-        <DialogoExportar temCartaz={!!projeto.meta.cartaz} papel={definicoes.papel} onExportar={exportar} onFechar={() => setDialogo(null)} inicial={exportarTipo}
+        <DialogoExportar teatro={projeto.meta.tipo === 'teatro'} temCartaz={!!projeto.meta.cartaz} cartazPorDefeito={!!projeto.meta.rosto?.cartaz} papel={definicoes.papel} onExportar={exportar} onFechar={() => setDialogo(null)} inicial={exportarTipo}
           episodios={projeto.episodios ? ordenar(projeto.episodios).map((e) => ({ id: e.id, rotulo: `${codigo(e)} — ${e.titulo}` })) : undefined}
           episodioAtivo={projeto.episodioAtivo} />
       )}

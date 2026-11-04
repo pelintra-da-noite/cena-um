@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { Definicoes, MetaProjeto } from '../types';
 import { NOMES_TIPO } from '../types';
 import { IFechar } from '../components/Icones';
 import { reduzirImagem } from '../io/imagens';
+import DialogoRosto from './DialogoRosto';
 
 interface Props {
   definicoes: Definicoes;
@@ -17,6 +18,7 @@ const Interruptor = ({ on, onClick, rotulo }: { on: boolean; onClick: () => void
 );
 
 export default function DialogoDefinicoes({ definicoes, onMudar, onFechar, meta, onMeta }: Props) {
+  const [editarRosto, setEditarRosto] = useState(false);
   const trocarCartaz = async () => {
     const [img] = await window.cena.escolherImagens(false);
     if (img && onMeta) onMeta({ cartaz: await reduzirImagem(img.dataUrl, 1400) });
@@ -60,6 +62,14 @@ export default function DialogoDefinicoes({ definicoes, onMudar, onFechar, meta,
                   {meta.cartaz && <button className="btn-fantasma" style={{ fontSize: 12 }} onClick={() => onMeta({ cartaz: null })}>Remover</button>}
                 </div>
               </div>
+              <div className="opcao">
+                <div style={{ flex: 1 }}><div className="t">Folha de rosto</div><div className="d">A capa do guião: título, crédito, autoria, versão, data e contactos.</div></div>
+                <button className="btn" onClick={() => setEditarRosto(true)}>Editar folha de rosto…</button>
+              </div>
+              {editarRosto && (
+                <DialogoRosto meta={meta} onFechar={() => setEditarRosto(false)}
+                  onGuardar={(titulo, autor, rosto) => onMeta({ titulo, autor, rosto })} />
+              )}
               {meta.tipo === 'curta' && (
                 <div className="opcao">
                   <div style={{ flex: 1 }}><div className="t">Guia de estrutura</div><div className="d">Perguntas por página no painel da direita.</div></div>
@@ -70,6 +80,15 @@ export default function DialogoDefinicoes({ definicoes, onMudar, onFechar, meta,
             </>
           )}
 
+          <div className="sobretitulo">Aparência</div>
+          <div className="opcao">
+            <div style={{ flex: 1 }}><div className="t">Tema</div><div className="d">Escuro cansa menos à noite; claro é melhor com muita luz. A folha do guião não muda.</div></div>
+            <div className="segmentos" role="radiogroup" aria-label="Tema">
+              <button role="radio" aria-checked={(definicoes.tema || 'escuro') === 'escuro'} className={(definicoes.tema || 'escuro') === 'escuro' ? 'ativo' : ''} onClick={() => onMudar({ tema: 'escuro' })}>Escuro</button>
+              <button role="radio" aria-checked={definicoes.tema === 'claro'} className={definicoes.tema === 'claro' ? 'ativo' : ''} onClick={() => onMudar({ tema: 'claro' })}>Claro</button>
+            </div>
+          </div>
+          <div style={{ height: 8 }} />
           <div className="sobretitulo">Escrita</div>
           <div className="opcao">
             <div style={{ flex: 1 }}>

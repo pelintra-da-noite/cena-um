@@ -172,7 +172,7 @@ export default function VistaQuadro({ view, estado, layout, projeto, onProjeto, 
                           onDrag={(e) => { if (e.clientX || e.clientY) ponteiro.current = { x: e.clientX, y: e.clientY }; }}
                           onDragOver={(e) => sobreCartao(e, col, id, c.ids)}
                           onDrop={(e) => { e.preventDefault(); e.stopPropagation(); largar(); }}>
-                          <div className="cartao-sb">
+                          {projeto.meta.tipo !== 'teatro' && <div className="cartao-sb">
                             {quadros[0] ? (
                               <button className="sb-mini" onClick={() => onIrParaCena(ci.indice)} title="Abrir a cena no guião">
                                 <img src={quadros[0].src} alt="" />
@@ -181,7 +181,7 @@ export default function VistaQuadro({ view, estado, layout, projeto, onProjeto, 
                             ) : (
                               <button className="sb-vazio" onClick={() => onCarregarStoryboard(id)}>+ Storyboard</button>
                             )}
-                          </div>
+                          </div>}
                           <button className="cartao-texto" onClick={() => onIrParaCena(ci.indice)} title="Abrir a cena no guião">
                             <span className="cartao-titulo"><b>{ci.numero}</b><span>{ci.texto || 'Cena sem cabeçalho'}</span></span>
                             <span className="cartao-sinopse">{sinopse(b) || 'Sem ação escrita.'}</span>

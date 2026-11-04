@@ -4,7 +4,7 @@ import { keymap } from 'prosemirror-keymap';
 import { history, undo, redo } from 'prosemirror-history';
 import { baseKeymap, toggleMark } from 'prosemirror-commands';
 import { schema, Elemento, DEPOIS_DE_ENTER, CICLO_TAB, novoId, ELEMENTOS } from './schema';
-import { calcularLayout, Layout, nomePersonagem, extrairLocal } from './layout';
+import { calcularLayout, Layout, nomePersonagem, extrairLocal, emTeatro } from './layout';
 import type { Papel } from '../types';
 
 type Cmd = (state: EditorState, dispatch?: (tr: Transaction) => void) => boolean;
@@ -69,6 +69,14 @@ export function calcularSugestao(state: EditorState, layout: Layout | null, extr
     const todas = [...layout.personagens, ...extra.filter((x) => !layout.personagens.includes(x))];
     const cand = todas.find((p) => p.startsWith(t) && p !== t && !(p === nomePersonagem(texto) && outros <= 1));
     return cand ? { resto: cand.slice(t.length), pos: $from.pos } : null;
+  }
+  if (el === 'cena' && emTeatro()) {
+    const p = ['ATO ', 'CENA ', 'PRÓLOGO', 'EPÍLOGO'].find((x) => x.startsWith(t) && x !== t);
+    return p ? { resto: p.slice(t.length), pos: $from.pos } : null;
+  }
+  if (el === 'transicao' && emTeatro()) {
+    const p = ['BLACKOUT.', 'PANO.', 'LUZ APAGA.', 'FIM.', 'INTERVALO.'].find((x) => x.startsWith(t) && x !== t);
+    return p ? { resto: p.slice(t.length), pos: $from.pos } : null;
   }
   if (el === 'cena') {
     const m = t.match(/^((?:INT\.?\/EXT\.?|EXT\.?\/INT\.?|I\/E\.?|INT\.|EXT\.)\s+)(.*)$/);
@@ -256,6 +264,12 @@ const DICAS: Record<Elemento, string> = {
   transicao: 'CORTA PARA:'
 };
 
+const DICAS_TEATRO: Partial<Record<Elemento, string>> = {
+  cena: 'ATO I — CENA 1',
+  acao: 'Didascália: espaço, entradas, gestos…',
+  transicao: 'BLACKOUT.'
+};
+
 function paginasPlugin(papelInicial: Papel) {
   return new Plugin<EstadoPaginas>({
     key: paginasKey,
@@ -296,8 +310,9 @@ function paginasPlugin(papelInicial: Papel) {
         });
         // dica no bloco vazio onde está o cursor
         const { node, inicio, el } = blocoAtual(state);
-        if (node && node.textContent === '' && DICAS[el]) {
-          decos.push(Decoration.node(inicio, inicio + node.nodeSize, { class: 'vazio', 'data-dica': DICAS[el] }));
+        const dica = (emTeatro() && DICAS_TEATRO[el]) || DICAS[el];
+        if (node && node.textContent === '' && dica) {
+          decos.push(Decoration.node(inicio, inicio + node.nodeSize, { class: 'vazio', 'data-dica': dica }));
         }
         // sugestão em fantasma
         if (st.sugestao) {

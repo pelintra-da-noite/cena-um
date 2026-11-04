@@ -26,6 +26,18 @@ export interface PersonagemInfo {
 export type CategoriaLevantamento =
   'figurantes' | 'aderecos' | 'guardaRoupa' | 'caracterizacao' | 'cenografia' | 'veiculos' | 'animais' | 'efeitos' | 'som' | 'notas';
 
+/** Folha de rosto (capa) do guião */
+export interface FolhaRosto {
+  credito: string; // "Escrito por", "Argumento de"…
+  autores: string; // um por linha
+  baseadoEm: string;
+  versao: string; // "Rascunho 2", "Versão final"…
+  data: string; // vazio = data do dia da exportação
+  contacto: string; // várias linhas, canto inferior esquerdo
+  direitos: string; // registo IGAC, ©…
+  cartaz: boolean;
+}
+
 export interface MetaProjeto {
   titulo: string;
   tipo: TipoProjeto;
@@ -37,6 +49,7 @@ export interface MetaProjeto {
   criado: string;
   modificado: string;
   atos?: string[]; // nomes das colunas do quadro de cenas
+  rosto?: FolhaRosto;
   atoCena?: Record<string, number>; // id da cena → índice do ato
 }
 
@@ -63,6 +76,7 @@ export interface Projeto {
   personagens?: PersonagemInfo[];
   levantamento?: Record<string, Partial<Record<CategoriaLevantamento, string[]>>>; // por id de cena
   locais?: Record<string, { rodagem: string }>; // por local do guião (em maiúsculas): onde vai ser filmado
+  equipa?: Departamento[]; // ficha técnica (partilhada por todos os episódios de uma série)
   // Séries: guiao/storyboard/tecnico/levantamento acima são os do episódio aberto;
   // a lista guarda todos (personagens, locais e atos são partilhados pela série)
   episodios?: Episodio[];
@@ -86,6 +100,7 @@ export interface Definicoes {
   numerosCena: boolean;
   zoom: number;
   ajustar?: boolean; // limita o zoom à largura do ecrã
+  tema?: 'escuro' | 'claro';
 }
 
 export interface DadosMenuContexto {
@@ -129,6 +144,7 @@ declare global {
       substituirPalavra(p: string): void;
       adicionarPalavra(p: string): void;
       editar(acao: 'cortar' | 'copiar' | 'colar' | 'tudo'): void;
+      tema(t: 'escuro' | 'claro'): void;
     };
   }
 }
@@ -139,3 +155,17 @@ export const NOMES_TIPO: Record<TipoProjeto, string> = {
   serie: 'Série de TV',
   teatro: 'Peça de teatro'
 };
+
+export interface MembroEquipa {
+  id: string;
+  funcao: string;
+  nome: string;
+  contacto: string;
+  residencia: string;
+  notas: string;
+}
+export interface Departamento {
+  id: string;
+  nome: string;
+  membros: MembroEquipa[];
+}

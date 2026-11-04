@@ -11,6 +11,7 @@ interface Props {
   onNovo: (t: TipoProjeto) => void;
   onAbrir: () => void;
   onAbrirRecente: (r: Recente) => void;
+  onDefinicoes: () => void;
 }
 
 function quando(ms?: number): string {
@@ -28,7 +29,7 @@ const Folha = ({ linhas }: { linhas: string[] }) => (
   <div className="folha">{linhas.map((c, i) => <i key={i} className={c.split(' ')[0]} style={{ width: c.split(' ')[1], marginLeft: c.split(' ')[2] }} />)}</div>
 );
 
-export default function Inicio({ recentes, temProjetoAberto, onVoltar, onNovo, onAbrir, onAbrirRecente }: Props) {
+export default function Inicio({ recentes, temProjetoAberto, onVoltar, onNovo, onAbrir, onAbrirRecente, onDefinicoes }: Props) {
   const [procura, setProcura] = useState('');
   const filtrados = useMemo(
     () => recentes.filter((r) => r.titulo.toLowerCase().includes(procura.trim().toLowerCase())),
@@ -47,7 +48,7 @@ export default function Inicio({ recentes, temProjetoAberto, onVoltar, onNovo, o
         </button>
         <button className="modelo" onClick={() => onNovo('longa')}>
           <div className="prev">
-            <div style={{ position: 'absolute', inset: '10px 18px 0 0', background: '#D9D6CF', borderRadius: 4 }} />
+            <div style={{ position: 'absolute', inset: '10px 18px 0 0', background: 'var(--linha-5)', borderRadius: 4 }} />
             <div style={{ position: 'absolute', inset: '0 0 10px 18px' }}><Folha linhas={['f 55%', 'n 90%', 'n 70%']} /></div>
           </div>
           <div className="txt"><b>Longa-metragem</b><small>90 a 120 páginas · três atos</small></div>
@@ -56,7 +57,7 @@ export default function Inicio({ recentes, temProjetoAberto, onVoltar, onNovo, o
           <div className="prev" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0,1fr))', gap: 6 }}>
             <div style={{ background: '#FBFAF7', borderRadius: 4 }} />
             <div style={{ background: '#FBFAF7', borderRadius: 4 }} />
-            <div style={{ background: '#3A3C43', borderRadius: 4, border: '1px dashed #5A5C63' }} />
+            <div style={{ background: 'var(--fundo-1)', borderRadius: 4, border: '1px dashed var(--linha-4)' }} />
           </div>
           <div className="txt"><b>Série de TV</b><small>Episódios e temporadas num só projeto</small></div>
         </button>
@@ -99,6 +100,7 @@ export default function Inicio({ recentes, temProjetoAberto, onVoltar, onNovo, o
           ))}
         </div>
       </section>
+      <button className="btn" style={{ marginTop: 28 }} onClick={onDefinicoes}>Definições e tema</button>
     </main>
   );
 }

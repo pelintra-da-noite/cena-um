@@ -12,6 +12,7 @@ import VistaTecnico from './VistaTecnico';
 import VistaPersonagens from './VistaPersonagens';
 import VistaLevantamento from './VistaLevantamento';
 import VistaEpisodios from './VistaEpisodios';
+import VistaEquipa from './VistaEquipa';
 import { codigo, novoEpisodio, ordenar } from '../io/episodios';
 import type { Episodio } from '../types';
 import Confirmar, { PedidoConfirmacao } from '../components/Confirmar';
@@ -36,6 +37,7 @@ interface Props {
   onExportar: (tipo?: 'guiao' | 'tecnico' | 'levantamento') => void;
   avisar: (t: string) => void;
   onTrocarEpisodio: (id: string) => void;
+  onExportarEquipa: (formato: 'pdf' | 'csv', soPreenchidos: boolean) => void;
   onAlterarEpisodios: (f: (l: Episodio[]) => Episodio[], abrir?: string) => void;
 }
 
@@ -62,8 +64,9 @@ export default function Editor(props: Props) {
   const [procura, setProcura] = useState('');
   const [foco, setFoco] = useState(false);
   const [visor, setVisor] = useState<{ cenaId: string; i: number } | null>(null);
-  const [vista, setVista] = useState<'guiao' | 'quadro' | 'storyboard' | 'tecnico' | 'personagens' | 'levantamento' | 'episodios'>('guiao');
+  const [vista, setVista] = useState<'guiao' | 'quadro' | 'storyboard' | 'tecnico' | 'personagens' | 'levantamento' | 'episodios' | 'equipa'>('guiao');
   const [confirmacao, setConfirmacao] = useState<PedidoConfirmacao | null>(null);
+  const teatro = projeto.meta.tipo === 'teatro';
   const confirmar = (titulo: string, texto: string, acao: () => void) => setConfirmacao({
     titulo, texto, botoes: [{ rotulo: 'Cancelar', acao: () => {} }, { rotulo: 'Continuar', principal: true, acao }]
   });
@@ -268,13 +271,16 @@ export default function Editor(props: Props) {
         )}
         <button aria-label="Guião" title="Guião" className={vista === 'guiao' ? 'ativo' : ''} onClick={() => irPara('guiao')}><IGuiao /></button>
         <button aria-label="Quadro de cenas" title="Quadro de cenas" className={vista === 'quadro' ? 'ativo' : ''} onClick={() => irPara('quadro')}><IQuadro /></button>
-        <button aria-label="Storyboard" title="Storyboard" className={vista === 'storyboard' ? 'ativo' : ''} onClick={() => irPara('storyboard')}><IStoryboard /></button>
-        <button aria-label="Guião técnico" title="Guião técnico" className={vista === 'tecnico' ? 'ativo' : ''} onClick={() => irPara('tecnico')}><ITecnico /></button>
+        {!teatro && <button aria-label="Storyboard" title="Storyboard" className={vista === 'storyboard' ? 'ativo' : ''} onClick={() => irPara('storyboard')}><IStoryboard /></button>}
+        {!teatro && <button aria-label="Guião técnico" title="Guião técnico" className={vista === 'tecnico' ? 'ativo' : ''} onClick={() => irPara('tecnico')}><ITecnico /></button>}
         <button aria-label="Personagens" title="Personagens" className={vista === 'personagens' ? 'ativo' : ''} onClick={() => irPara('personagens')}>
           <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5" /><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5" /><path d="M16 4.6a3.5 3.5 0 010 6.8M18 14.8c1.8.7 3 2.4 3.5 5.2" /></svg>
         </button>
         <button aria-label="Levantamento" title="Levantamento" className={vista === 'levantamento' ? 'ativo' : ''} onClick={() => irPara('levantamento')}>
           <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2" /><path d="M9 4V3h6v1M9 10h6M9 14h6M9 18h3" /></svg>
+        </button>
+        <button aria-label="Equipa" title="Equipa" className={vista === 'equipa' ? 'ativo' : ''} onClick={() => irPara('equipa')}>
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 8h16v11a1 1 0 01-1 1H5a1 1 0 01-1-1z" /><path d="M9 8V5a1 1 0 011-1h4a1 1 0 011 1v3M4 13h16M11 13v2h2v-2" /></svg>
         </button>
         <span className="espaco" />
         <button aria-label="Definições" title="Definições" onClick={props.onAbrirDefinicoes}><IDefinicoes /></button>
@@ -320,7 +326,7 @@ export default function Editor(props: Props) {
                 <span className="num">{c.numero}</span>
                 <span className="info">
                   <div className="cab">{c.texto || 'Cena sem cabeçalho'}</div>
-                  <div className="meta">{formatarSegundos(c.segundos)} · {n ? `${n} plano${n > 1 ? 's' : ''}` : 'sem storyboard'}</div>
+                  <div className="meta">{formatarSegundos(c.segundos)}{teatro ? (c.personagens.length ? ` · ${c.personagens.length} em cena` : '') : ` · ${n ? `${n} plano${n > 1 ? 's' : ''}` : 'sem storyboard'}`}</div>
                 </span>
               </button>
             );
@@ -361,7 +367,7 @@ export default function Editor(props: Props) {
 
         <div className="area-papel" ref={areaRef} onMouseDown={(e) => { if (e.target === e.currentTarget) view?.focus(); }}>
           <div
-            className={'papel' + (definicoes.papelEscuro ? ' escuro' : '') + (definicoes.numerosCena ? ' numeros' : '')}
+            className={'papel' + (projeto.meta.tipo === 'teatro' ? ' teatro' : '') + (definicoes.papelEscuro ? ' escuro' : '') + (definicoes.numerosCena ? ' numeros' : '')}
             style={{ ['--z' as any]: zoomEfetivo, ['--larg-in' as any]: fmt.larguraIn, ['--alt-in' as any]: fmt.alturaIn }}
           >
             <div ref={montagem} />
@@ -393,7 +399,7 @@ export default function Editor(props: Props) {
           {alvo > 0 && <div className="barra-prog"><div className={racio > 1.1 ? 'excesso' : ''} style={{ width: `${Math.min(100, racio * 100)}%` }} /></div>}
           <div className="linha-meta">
             <span>{layout?.paginas || 1} página{layout?.paginas === 1 ? '' : 's'}</span>
-            <span>Diálogo {pctDialogo}% · Ação {totalLinhas ? 100 - pctDialogo : 0}%</span>
+            <span>Diálogo {pctDialogo}% · {teatro ? 'Didascálias' : 'Ação'} {totalLinhas ? 100 - pctDialogo : 0}%</span>
           </div>
         </section>
 
@@ -420,7 +426,13 @@ export default function Editor(props: Props) {
           </section>
         )}
 
-        <section className="cartao">
+        {teatro && cenaAtual && cenaAtual.personagens.length > 0 && (
+          <section className="cartao">
+            <div className="cartao-cab"><span className="sobretitulo">Em cena · Cena {cenaAtual.numero}</span></div>
+            <div className="nota-pequena">{cenaAtual.personagens.map((p) => p.toLowerCase().replace(/(^|\s)(\S)/g, (_m, a, b) => a + b.toUpperCase())).join(', ')} · {formatarSegundos(cenaAtual.segundos)}</div>
+          </section>
+        )}
+        {!teatro && <section className="cartao">
           <div className="cartao-cab">
             <span className="sobretitulo">{cenaAtual ? `Storyboard · Cena ${cenaAtual.numero}` : 'Storyboard'}</span>
             {cenaAtual && <button className="btn-fantasma" style={{ fontSize: 12 }} onClick={() => carregarStoryboard()}>Carregar</button>}
@@ -445,7 +457,7 @@ export default function Editor(props: Props) {
               )}
             </>
           )}
-        </section>
+        </section>}
 
         <section className="cartao" style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
           <span className="ponto" style={{ background: 'var(--erro)', marginTop: 5 }} />
@@ -475,8 +487,11 @@ export default function Editor(props: Props) {
           onAbrir={(id) => { if (id === projeto.episodioAtivo) irPara('guiao'); else props.onTrocarEpisodio(id); }}
           onAlterar={props.onAlterarEpisodios} confirmar={confirmar} />
       )}
+      {vista === 'equipa' && (
+        <VistaEquipa projeto={projeto} onProjeto={onProjeto} onExportar={props.onExportarEquipa} confirmar={confirmar} />
+      )}
       {vista === 'personagens' && estado && layout && (
-        <VistaPersonagens estado={estado} layout={layout} projeto={projeto} papel={definicoes.papel} onProjeto={onProjeto}
+        <VistaPersonagens estado={estado} layout={layout} projeto={projeto} papel={definicoes.papel} onProjeto={onProjeto} onAbrirEpisodio={(id) => { if (id !== projeto.episodioAtivo) props.onTrocarEpisodio?.(id); }}
           onIrParaCena={irParaCena} avisar={avisar} />
       )}
       {vista === 'levantamento' && estado && layout && (

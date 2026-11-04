@@ -150,6 +150,14 @@ ipcMain.on('editar', (_e, acao) => {
   else if (acao === 'tudo') wc.selectAll();
 });
 
+// Tema: a barra de título do Windows (minimizar/maximizar/fechar) acompanha a interface
+ipcMain.on('tema', (_e, t) => {
+  if (!janela) return;
+  const claro = t === 'claro';
+  try { janela.setTitleBarOverlay({ color: claro ? '#E8E6E1' : '#0E0F11', symbolColor: claro ? '#36363B' : '#C9C7C2', height: 36 }); } catch {}
+  janela.setBackgroundColor(claro ? '#F3F2EE' : '#121316');
+});
+
 // ---------- IPC ----------
 ipcMain.handle('app:ficheiro-inicial', () => {
   const f = ficheiroInicial; ficheiroInicial = null;

@@ -12,9 +12,25 @@ export const FORMATO = {
   carta: { larguraIn: 8.5, alturaIn: 11, colunas: 60, linhasPagina: 53 }
 } as const;
 
+/**
+ * Peças de teatro usam outra página: falas a toda a largura, nome da personagem centrado,
+ * didascálias recuadas três tabulações (15 caracteres) e em itálico. Todos os episódios/textos de um
+ * projeto têm o mesmo tipo, por isso basta um interruptor global definido ao abrir o projeto.
+ */
+let teatro = false;
+export function definirTeatro(v: boolean) { teatro = v; }
+export function emTeatro() { return teatro; }
+
 /** Recuo e largura de cada elemento, em caracteres, a partir da margem do texto */
 export function geometria(el: Elemento, papel: Papel): { recuo: number; largura: number } {
   const col = FORMATO[papel].colunas;
+  if (teatro) {
+    switch (el) {
+      case 'acao': return { recuo: 15, largura: col - 15 };
+      case 'parentetico': return { recuo: 15, largura: col - 30 };
+      default: return { recuo: 0, largura: col };
+    }
+  }
   switch (el) {
     case 'personagem': return { recuo: 22, largura: col - 22 };
     case 'dialogo': return { recuo: 10, largura: 35 };
@@ -84,7 +100,7 @@ const tipoDe = (n: PMNode) => n.type.name as Elemento;
 export function espacoAntes(el: Elemento, anterior: Elemento | null): number {
   if (!anterior) return 0;
   if (el === 'cena') return 2;
-  if ((el === 'dialogo' || el === 'parentetico') && anterior === 'personagem') return 0.5;
+  if ((el === 'dialogo' || el === 'parentetico') && anterior === 'personagem') return teatro ? 0 : 0.5;
   return LINHAS_ANTES[el];
 }
 

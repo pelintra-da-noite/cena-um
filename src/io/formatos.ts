@@ -1,5 +1,6 @@
 import { schema, Elemento, novoId } from '../editor/schema';
 import type { Node as PMNode } from 'prosemirror-model';
+import type { FolhaRosto } from '../types';
 
 // ---------------------------------------------------------------------------
 // Final Draft (.fdx)
@@ -16,7 +17,7 @@ const MAIUSCULAS: Elemento[] = ['cena', 'personagem', 'transicao'];
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
-export function paraFdx(doc: PMNode, titulo: string, autor: string): string {
+export function paraFdx(doc: PMNode, titulo: string, autor: string, rosto?: FolhaRosto): string {
   const paras: string[] = [];
   doc.forEach((n) => {
     const el = n.type.name as Elemento;
@@ -40,10 +41,7 @@ ${paras.join('\n')}
   </Content>
   <TitlePage>
     <Content>
-      <Paragraph Alignment="Center" Type="General"><Text>${esc(titulo.toUpperCase())}</Text></Paragraph>
-      <Paragraph Alignment="Center" Type="General"><Text></Text></Paragraph>
-      <Paragraph Alignment="Center" Type="General"><Text>Escrito por</Text></Paragraph>
-      <Paragraph Alignment="Center" Type="General"><Text>${esc(autor)}</Text></Paragraph>
+${rostoFdx(titulo, autor, rosto)}
     </Content>
   </TitlePage>
 </FinalDraft>
@@ -85,8 +83,17 @@ export function deFdx(xml: string): { doc: any; titulo: string | null } {
 // ---------------------------------------------------------------------------
 // Fountain (.fountain) — texto simples usado por muitos argumentistas
 // ---------------------------------------------------------------------------
-export function paraFountain(doc: PMNode, titulo: string, autor: string): string {
-  const linhas: string[] = [`Title: ${titulo}`, `Credit: Escrito por`, `Author: ${autor}`, ''];
+export function paraFountain(doc: PMNode, titulo: string, autor: string, rosto?: FolhaRosto): string {
+  const r = rosto || { credito: 'Escrito por', autores: autor, baseadoEm: '', versao: '', data: '', contacto: '', direitos: '', cartaz: false };
+  const multi = (k: string, v: string) => (v.includes('\n') ? [`${k}:`, ...v.split('\n').map((l) => `    ${l}`)] : [`${k}: ${v}`]);
+  const linhas: string[] = [
+    `Title: ${titulo}`, `Credit: ${r.credito}`, ...multi('Author', r.autores || autor),
+    ...(r.baseadoEm ? [`Source: ${r.baseadoEm}`] : []),
+    ...(r.versao || r.data ? [`Draft date: ${[r.versao, r.data].filter(Boolean).join(' · ')}`] : []),
+    ...(r.contacto ? multi('Contact', r.contacto) : []),
+    ...(r.direitos ? [`Copyright: ${r.direitos}`] : []),
+    ''
+  ];
   doc.forEach((n) => {
     const el = n.type.name as Elemento;
     let txt = n.textContent;
@@ -183,4 +190,17 @@ const capitalizar = (s: string) => s.charAt(0).toUpperCase() + s.slice(1).toLowe
 /** Garante que um JSON vindo de fora é um documento válido para o editor */
 export function validarDoc(json: any): PMNode {
   return schema.nodeFromJSON(json);
+}
+
+function rostoFdx(titulo: string, autor: string, rosto?: FolhaRosto): string {
+  const r = rosto || { credito: 'Escrito por', autores: autor, baseadoEm: '', versao: '', data: '', contacto: '', direitos: '', cartaz: false };
+  const p = (t: string, al = 'Center') => `      <Paragraph Alignment="${al}" Type="General"><Text>${esc(t)}</Text></Paragraph>`;
+  const linhas = [p(titulo.toUpperCase()), p(''), p(r.credito), ...(r.autores || autor).split('\n').filter(Boolean).map((a) => p(a))];
+  if (r.baseadoEm) linhas.push(p(''), p(r.baseadoEm));
+  for (let i = 0; i < 12; i++) linhas.push(p(''));
+  for (const l of r.contacto.split('\n').filter(Boolean)) linhas.push(p(l, 'Left'));
+  if (r.direitos) linhas.push(p(r.direitos, 'Left'));
+  if (r.versao) linhas.push(p(r.versao, 'Right'));
+  if (r.data) linhas.push(p(r.data, 'Right'));
+  return linhas.join('\n');
 }
