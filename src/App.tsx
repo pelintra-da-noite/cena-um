@@ -17,7 +17,7 @@ import DialogoExportar, { OpcoesExportar } from './screens/DialogoExportar';
 import BarraTitulo from './components/BarraTitulo';
 import Confirmar, { PedidoConfirmacao } from './components/Confirmar';
 
-const DEF_PADRAO: Definicoes = { papelEscuro: false, papel: 'a4', numerosCena: true, zoom: 1.0 };
+const DEF_PADRAO: Definicoes = { papelEscuro: false, papel: 'a4', numerosCena: true, zoom: 1.0, autoGuardar: 5 };
 
 function lerDefinicoes(): Definicoes {
   try { return { ...DEF_PADRAO, ...JSON.parse(localStorage.getItem('cena-um:definicoes') || '{}') }; }
@@ -42,6 +42,8 @@ export default function App() {
   const viewRef = useRef<EditorView | null>(null);
   const estadoRef = useRef({ projeto, caminho, porGuardar });
   estadoRef.current = { projeto, caminho, porGuardar };
+  const ultimaAuto = useRef(Date.now());
+  const [guardadoAs, setGuardadoAs] = useState<number | null>(null);
 
   const avisar = useCallback((t: string) => {
     setAviso(t);
@@ -71,6 +73,8 @@ export default function App() {
     setProjeto((() => { const m = migrarSerie(p); return m.equipa ? { ...m, equipa: migrarEquipa(m.equipa) } : m; })());
     setCaminho(cam);
     setPorGuardar(sujo);
+    setGuardadoAs(null);
+    ultimaAuto.current = Date.now();
     setSessao((s) => s + 1);
     setEcra('editor');
   }, []);
@@ -158,7 +162,7 @@ export default function App() {
       texto: 'Se continuares sem guardar, perdes o que escreveste desde a última gravação.',
       botoes: [
         { rotulo: 'Cancelar', acao: () => {} },
-        { rotulo: 'Não guardar', acao },
+        { rotulo: 'Não guardar', acao: () => { window.cena.apagarRecuperacao(); acao(); } },
         { rotulo: 'Guardar', principal: true, acao: async () => { if (await guardarRef.current(false)) acao(); } }
       ]
     });
@@ -185,6 +189,9 @@ export default function App() {
       nomeSugerido: final.meta.titulo || 'Sem título'
     });
     if (!destino) return false;
+    window.cena.apagarRecuperacao();
+    ultimaAuto.current = Date.now();
+    setGuardadoAs(Date.now());
     setProjeto(final);
     setCaminho(destino);
     setPorGuardar(false);
@@ -198,6 +205,8 @@ export default function App() {
     atualizarRecentes();
     return true;
   }, [projetoAtual, definicoes.papel, atualizarRecentes]);
+  const projetoAtualRef = useRef(projetoAtual);
+  projetoAtualRef.current = projetoAtual;
   const guardarRef = useRef(guardar);
   guardarRef.current = guardar;
 
@@ -282,18 +291,43 @@ export default function App() {
 
   // ---------- arranque, atalhos e gravação automática ----------
   useEffect(() => {
-    window.cena.ficheiroInicial().then((f) => { if (f) abrirConteudo(f.caminho, f.conteudo); });
+    window.cena.ficheiroInicial().then(async (f) => {
+      if (f) { abrirConteudo(f.caminho, f.conteudo); return; }
+      // O programa fechou de repente com um guião que nunca foi guardado?
+      const r = await window.cena.lerRecuperacao();
+      if (!r) return;
+      let p: Projeto;
+      try { p = JSON.parse(r.conteudo); if (p.formato !== 'cena') throw new Error(); } catch { window.cena.apagarRecuperacao(); return; }
+      const quando = new Date(r.quando);
+      setConfirmacao({
+        titulo: 'Há um guião por recuperar',
+        texto: `O Cena Um fechou antes de guardares «${p.meta?.titulo || 'Sem título'}». A cópia de segurança é de ${quando.toLocaleDateString('pt-PT')} às ${quando.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}.`,
+        botoes: [
+          { rotulo: 'Descartar', acao: () => { window.cena.apagarRecuperacao(); } },
+          { rotulo: 'Recuperar', principal: true, acao: () => { carregar(p, null, true); avisar('Guião recuperado. Guarda-o num ficheiro para não voltares a depender da cópia de segurança.'); } }
+        ]
+      });
+    });
     window.cena.aoAbrirFicheiro((f) => abrirConteudo(f.caminho, f.conteudo));
     window.cena.aoGuardarEFechar(async () => { if (await guardarRef.current(false)) window.cena.fecharAgora(); });
   }, []); // eslint-disable-line
 
+  // Gravação automática: guarda o ficheiro a cada N minutos (Definições). Um guião que ainda não tem ficheiro
+  // vai para uma cópia de segurança interna, recuperada se o programa fechar sem guardar.
+  const minutosAuto = definicoes.autoGuardar ?? 5;
   useEffect(() => {
-    const t = window.setInterval(() => {
-      const { caminho: c, porGuardar: pg } = estadoRef.current;
-      if (c && pg) guardarRef.current(false);
-    }, 60000);
+    const t = window.setInterval(async () => {
+      const { caminho: c, porGuardar: pg, projeto: p } = estadoRef.current;
+      if (!p || !pg) return;
+      const intervalo = (c ? minutosAuto : Math.min(minutosAuto || 5, 5)) * 60000;
+      if (!intervalo || Date.now() - ultimaAuto.current < intervalo) return;
+      ultimaAuto.current = Date.now();
+      if (c) { await guardarRef.current(false); return; }
+      const atual = projetoAtualRef.current();
+      if (atual) window.cena.guardarRecuperacao(JSON.stringify(atual));
+    }, 15000);
     return () => window.clearInterval(t);
-  }, []);
+  }, [minutosAuto]);
 
   useEffect(() => {
     const tecla = (e: KeyboardEvent) => {
@@ -313,7 +347,7 @@ export default function App() {
   definirTeatro(projeto?.meta.tipo === 'teatro');
   return (
     <div className="app">
-      <BarraTitulo ficheiro={ecra === 'editor' ? nomeFicheiro : null} porGuardar={porGuardar}
+      <BarraTitulo ficheiro={ecra === 'editor' ? nomeFicheiro : null} porGuardar={porGuardar} guardadoAs={guardadoAs} autoGuardar={caminho ? minutosAuto : 0}
         episodio={ecra === 'editor' && projeto && episodioAtivo(projeto) ? `${codigo(episodioAtivo(projeto)!)} — ${episodioAtivo(projeto)!.titulo}` : null}
         onGuardar={() => guardarRef.current(false).then((ok) => { if (ok) avisar('Guião guardado.'); })}
         onGuardarComo={() => guardarRef.current(true).then((ok) => { if (ok) avisar('Guião guardado com outro nome.'); })} />

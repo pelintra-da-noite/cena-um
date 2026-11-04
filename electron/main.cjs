@@ -91,7 +91,7 @@ function criarJanela() {
       detail: 'Queres guardar o guião antes de fechar?'
     });
     if (r === 0) janela.webContents.send('app:guardar-e-fechar');
-    if (r === 1) { podeFechar = true; janela.close(); }
+    if (r === 1) { try { fs.unlinkSync(path.join(app.getPath('userData'), 'recuperacao.cena')); } catch {} podeFechar = true; janela.close(); }
   });
 
   const mostrar = () => { if (janela && !janela.isDestroyed() && !janela.isVisible()) janela.show(); };
@@ -164,6 +164,17 @@ ipcMain.handle('app:ficheiro-inicial', () => {
   if (!f) return null;
   try { return { caminho: f, conteudo: fs.readFileSync(f, 'utf8') }; } catch { return null; }
 });
+
+// Cópia de segurança dos guiões que ainda não têm ficheiro (recuperada se o programa fechar de repente)
+const RECUP = () => path.join(app.getPath('userData'), 'recuperacao.cena');
+ipcMain.handle('recuperacao:guardar', (_e, conteudo) => {
+  try { const tmp = RECUP() + '.tmp'; fs.writeFileSync(tmp, conteudo, 'utf8'); fs.renameSync(tmp, RECUP()); return true; }
+  catch (e) { registar('cópia de segurança:', e); return false; }
+});
+ipcMain.handle('recuperacao:ler', () => {
+  try { const st = fs.statSync(RECUP()); return { conteudo: fs.readFileSync(RECUP(), 'utf8'), quando: st.mtimeMs }; } catch { return null; }
+});
+ipcMain.handle('recuperacao:apagar', () => { try { fs.unlinkSync(RECUP()); } catch {} return true; });
 
 ipcMain.on('doc:por-guardar', (_e, valor) => { porGuardar = !!valor; });
 ipcMain.on('app:fechar-agora', () => { podeFechar = true; if (janela) janela.close(); });

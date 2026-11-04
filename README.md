@@ -38,7 +38,7 @@ O instalador ainda não tem assinatura digital. Na primeira vez, o Windows mostr
 - **Tema escuro ou claro** (Definições → Aparência).
 - **Equipa**: ficha técnica por departamentos com funções já preenchidas (cinema/TV ou teatro), onde acrescentas funções e departamentos; nome, contacto, residência e notas por pessoa. Exporta PDF e folha de cálculo.
 - **Personagens em toda a série**: em que episódios cada personagem fala ou aparece, com total de falas e tempo de diálogo.
-- **Ficheiros**: guarda em `.cena`, gravação automática a cada minuto, exporta PDF, Final Draft (`.fdx`) e Fountain; importa `.fdx` e `.fountain`.
+- **Ficheiros**: guarda em `.cena`, gravação automática configurável (1, 5 ou 10 minutos, ou desligada; 5 por defeito) e cópia de segurança dos guiões ainda sem ficheiro, recuperada se o programa fechar de repente; exporta PDF, Final Draft (`.fdx`) e Fountain; importa `.fdx` e `.fountain`.
 
 ## Imagens
 

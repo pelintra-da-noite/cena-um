@@ -103,6 +103,7 @@ export interface Definicoes {
   zoom: number;
   ajustar?: boolean; // limita o zoom à largura do ecrã
   tema?: 'escuro' | 'claro';
+  autoGuardar?: number; // minutos entre gravações automáticas; 0 = desligada
 }
 
 export interface DadosMenuContexto {
@@ -125,6 +126,9 @@ declare global {
     cena: {
       plataforma: string;
       ficheiroInicial(): Promise<FicheiroLido | null>;
+      guardarRecuperacao(conteudo: string): Promise<boolean>;
+      lerRecuperacao(): Promise<{ conteudo: string; quando: number } | null>;
+      apagarRecuperacao(): Promise<boolean>;
       abrir(): Promise<FicheiroLido | null>;
       abrirCaminho(caminho: string): Promise<FicheiroLido | null>;
       guardar(d: { caminho: string | null; conteudo: string; nomeSugerido: string }): Promise<string | null>;

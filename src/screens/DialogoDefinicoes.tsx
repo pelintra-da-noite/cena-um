@@ -89,6 +89,17 @@ export default function DialogoDefinicoes({ definicoes, onMudar, onFechar, meta,
             </div>
           </div>
           <div style={{ height: 8 }} />
+          <div className="sobretitulo">Gravação</div>
+          <div className="opcao">
+            <div style={{ flex: 1 }}><div className="t">Gravação automática</div><div className="d">Guarda o ficheiro sozinho de tantos em tantos minutos. Um guião ainda sem ficheiro fica numa cópia de segurança e é recuperado se o programa fechar de repente.</div></div>
+            <div className="segmentos" role="radiogroup" aria-label="Gravação automática">
+              {[1, 5, 10, 0].map((m) => (
+                <button key={m} role="radio" aria-checked={(definicoes.autoGuardar ?? 5) === m} className={(definicoes.autoGuardar ?? 5) === m ? 'ativo' : ''}
+                  onClick={() => onMudar({ autoGuardar: m })}>{m ? `${m} min` : 'Desligada'}</button>
+              ))}
+            </div>
+          </div>
+          <div style={{ height: 8 }} />
           <div className="sobretitulo">Escrita</div>
           <div className="opcao">
             <div style={{ flex: 1 }}>
