@@ -123,8 +123,13 @@ export function analisar(doc: PMNode, layout: Layout, projeto: Projeto, papel: P
   return { cenas, personagens: [...resumo.values()] };
 }
 
+const PEQUENAS = new Set(['a', 'o', 'as', 'os', 'e', 'de', 'da', 'do', 'das', 'dos', 'em', 'na', 'no', 'nas', 'nos', 'à', 'ao', 'aos', 'às', 'com', 'por', 'para']);
+
+/** "COZINHA DA AVÓ" → "Cozinha da Avó" */
 export function titulo(s: string): string {
-  return s.toLowerCase().replace(/(^|\s|-)(\S)/g, (_m, a, b) => a + b.toUpperCase());
+  return s.toLowerCase().split(/(\s+)/).map((p, i) =>
+    (i > 0 && PEQUENAS.has(p)) || !p.trim() ? p : p.replace(/(^|-)(\S)/g, (_m, a, b) => a + b.toUpperCase())
+  ).join('');
 }
 
 export function atualizarPersonagem(lista: PersonagemInfo[] | undefined, nome: string, f: (p: PersonagemInfo) => PersonagemInfo | null): PersonagemInfo[] {

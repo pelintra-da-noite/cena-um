@@ -29,11 +29,11 @@ export function levantamentoCsv(p: Projeto, papel: Papel): string {
   const doc = validarDoc(p.guiao);
   const layout = calcularLayout(doc, papel);
   const { cenas } = analisar(doc, layout, p, papel);
-  const cab = ['Cena', 'Cabeçalho', 'INT/EXT', 'Local', 'Momento', 'Páginas', 'Duração (s)', 'Personagens com falas', 'Personagens sem falas', ...CATEGORIAS.map((c) => c.nome)];
+  const cab = ['Cena', 'Cabeçalho', 'INT/EXT', 'Local', 'Local de rodagem', 'Momento', 'Páginas', 'Duração (s)', 'Personagens com falas', 'Personagens sem falas', ...CATEGORIAS.map((c) => c.nome)];
   const linhas: string[][] = [cab];
   for (const c of cenas) {
     linhas.push([
-      String(c.numero), c.cabecalho, c.intExt, c.local, c.momento, formatarOitavos(c.oitavos), String(c.segundos),
+      String(c.numero), c.cabecalho, c.intExt, c.local, (p.locais || {})[c.local]?.rodagem || '', c.momento, formatarOitavos(c.oitavos), String(c.segundos),
       c.falam.map(titulo).join(', '), c.aparecem.map(titulo).join(', '),
       ...CATEGORIAS.map((cat) => (c.elementos[cat.id] || []).join(', '))
     ]);

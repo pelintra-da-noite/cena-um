@@ -49,6 +49,7 @@ export interface Projeto {
   tecnico?: Record<string, Plano[]>; // guião técnico, por id de cena
   personagens?: PersonagemInfo[];
   levantamento?: Record<string, Partial<Record<CategoriaLevantamento, string[]>>>; // por id de cena
+  locais?: Record<string, { rodagem: string }>; // por local do guião (em maiúsculas): onde vai ser filmado
 }
 
 export interface Recente {

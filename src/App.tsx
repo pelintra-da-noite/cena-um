@@ -177,7 +177,7 @@ export default function App() {
         const r = await window.cena.exportarPdf({
           nomeSugerido: `${nome} — levantamento`, papel: definicoes.papel, guiao: p.guiao, meta: p.meta,
           rosto: false, cartaz: false, numeros: true, modo: 'levantamento', paisagem: true,
-          personagens: p.personagens || [], levantamento: p.levantamento || {}
+          personagens: p.personagens || [], levantamento: p.levantamento || {}, locais: p.locais || {}
         });
         if (r) avisar('Levantamento exportado em PDF.');
       } else if (op.formato === 'lev-csv') {

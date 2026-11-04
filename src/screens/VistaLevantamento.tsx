@@ -44,6 +44,12 @@ export default function VistaLevantamento({ estado, layout, projeto, papel, onPr
   const [filtro, setFiltro] = useState('');
   const { cenas, personagens } = useMemo(() => analisar(estado.doc, layout, projeto, papel), [estado.doc, layout, projeto, papel]);
 
+  // Local real de rodagem: um por local do guião, partilhado por todas as cenas desse local
+  const rodagem = (local: string) => (projeto.locais || {})[local]?.rodagem || '';
+  const mudarRodagem = (local: string, valor: string) => onProjeto((p) => ({
+    ...p, locais: { ...(p.locais || {}), [local]: { rodagem: valor } }
+  }));
+
   const mudar = (cenaId: string, cat: CategoriaLevantamento, v: string[]) => onProjeto((p) => ({
     ...p, levantamento: { ...(p.levantamento || {}), [cenaId]: { ...((p.levantamento || {})[cenaId] || {}), [cat]: v } }
   }));
@@ -116,6 +122,17 @@ export default function VistaLevantamento({ estado, layout, projeto, papel, onPr
                 <span className="vista-sub">≈ {formatarSegundos(c.segundos)}</span>
               </div>
               <div className="lev-personagens">
+                <span className="campo-lev-rot">Local</span>
+                <div className="lev-local">
+                  <span className="chip-lev forte">{titulo(c.local)}</span>
+                  <input className="lev-rodagem" value={rodagem(c.local)} placeholder="Local real de rodagem (morada, casa, estúdio…)"
+                    aria-label={`Local real de rodagem de ${titulo(c.local)}`} spellCheck onChange={(e) => mudarRodagem(c.local, e.target.value)} />
+                  {cenas.filter((x) => x.local === c.local).length > 1 && (
+                    <span className="vista-sub">vale para as {cenas.filter((x) => x.local === c.local).length} cenas neste local</span>
+                  )}
+                </div>
+              </div>
+              <div className="lev-personagens">
                 <span className="campo-lev-rot">Personagens</span>
                 <div className="campo-lev-chips">
                   {c.falam.map((n) => <span key={n} className="chip-lev forte">{titulo(n)}</span>)}
@@ -144,11 +161,13 @@ export default function VistaLevantamento({ estado, layout, projeto, papel, onPr
           <section className="tec-cena">
             <h2 className="resumo-tit">Locais</h2>
             <table className="tec-tabela">
-              <thead><tr><th>Local</th><th style={{ width: 110 }}>INT/EXT</th><th style={{ width: 200 }}>Momentos</th><th style={{ width: 90 }}>Páginas</th><th style={{ width: 110 }}>Duração</th><th style={{ width: 200 }}>Cenas</th></tr></thead>
+              <thead><tr><th>Local</th><th style={{ width: 260 }}>Local de rodagem</th><th style={{ width: 110 }}>INT/EXT</th><th style={{ width: 200 }}>Momentos</th><th style={{ width: 90 }}>Páginas</th><th style={{ width: 110 }}>Duração</th><th style={{ width: 200 }}>Cenas</th></tr></thead>
               <tbody>
                 {resumo.locais.map(([local, l]) => (
                   <tr key={local}>
                     <td><b>{titulo(local)}</b></td>
+                    <td><input className="lev-rodagem" style={{ width: '100%' }} value={rodagem(local)} placeholder="Onde vai ser filmado"
+                      aria-label={`Local real de rodagem de ${titulo(local)}`} spellCheck onChange={(e) => mudarRodagem(local, e.target.value)} /></td>
                     <td>{[...new Set(l.map((c) => c.intExt))].join(', ')}</td>
                     <td>{[...new Set(l.map((c) => titulo(c.momento)))].join(', ')}</td>
                     <td>{formatarOitavos(l.reduce((s, c) => s + c.oitavos, 0))}</td>

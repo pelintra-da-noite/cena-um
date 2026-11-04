@@ -16,6 +16,7 @@ interface Dados {
   modo?: 'guiao' | 'tecnico' | 'levantamento';
   personagens?: PersonagemInfo[];
   levantamento?: Projeto['levantamento'];
+  locais?: Projeto['locais'];
   tecnico?: Record<string, Plano[]>;
   storyboard?: Record<string, Quadro[]>;
 }
@@ -71,7 +72,7 @@ export default function VistaImpressao() {
               {cenas.map((c) => (
                 <tr key={c.id}>
                   <td><b>{c.numero}</b></td>
-                  <td className="ac">{c.cabecalho}</td>
+                  <td className="ac">{c.cabecalho}{d.locais?.[c.local]?.rodagem ? <div style={{ fontFamily: 'var(--ui)', color: '#555' }}>Rodagem: {d.locais[c.local].rodagem}</div> : null}</td>
                   <td>{c.intExt}</td><td>{tituloLev(c.momento)}</td><td>{formatarOitavos(c.oitavos)}</td>
                   <td>{c.falam.map(tituloLev).join(', ')}{c.aparecem.length ? <div style={{ color: '#555' }}>sem falas: {c.aparecem.map(tituloLev).join(', ')}</div> : null}</td>
                   <td>{CATEGORIAS.filter((k) => (c.elementos[k.id] || []).length).map((k) => (
@@ -84,10 +85,10 @@ export default function VistaImpressao() {
           <div className="tp-cena" style={{ marginTop: '18pt' }}>
             <h3>Por local</h3>
             <table className="tp">
-              <thead><tr><th>Local</th><th style={{ width: '12%' }}>Int/Ext</th><th style={{ width: '18%' }}>Momentos</th><th style={{ width: '9%' }}>Págs.</th><th style={{ width: '11%' }}>Duração</th><th style={{ width: '22%' }}>Cenas</th></tr></thead>
+              <thead><tr><th>Local</th><th style={{ width: '22%' }}>Local de rodagem</th><th style={{ width: '10%' }}>Int/Ext</th><th style={{ width: '18%' }}>Momentos</th><th style={{ width: '9%' }}>Págs.</th><th style={{ width: '11%' }}>Duração</th><th style={{ width: '22%' }}>Cenas</th></tr></thead>
               <tbody>
                 {[...locais.entries()].map(([l, cs]) => (
-                  <tr key={l}><td><b>{tituloLev(l)}</b></td><td>{[...new Set(cs.map((c) => c.intExt))].join(', ')}</td>
+                  <tr key={l}><td><b>{tituloLev(l)}</b></td><td>{d.locais?.[l]?.rodagem || '—'}</td><td>{[...new Set(cs.map((c) => c.intExt))].join(', ')}</td>
                     <td>{[...new Set(cs.map((c) => tituloLev(c.momento)))].join(', ')}</td>
                     <td>{formatarOitavos(cs.reduce((x, c) => x + c.oitavos, 0))}</td>
                     <td>{formatarSegundos(cs.reduce((x, c) => x + c.segundos, 0))}</td>
