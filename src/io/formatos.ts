@@ -1,6 +1,7 @@
 import { schema, Elemento, novoId } from '../editor/schema';
 import type { Node as PMNode } from 'prosemirror-model';
 import type { FolhaRosto } from '../types';
+import { t } from '../i18n';
 
 // ---------------------------------------------------------------------------
 // Final Draft (.fdx)
@@ -50,9 +51,9 @@ ${rostoFdx(titulo, autor, rosto)}
 
 export function deFdx(xml: string): { doc: any; titulo: string | null } {
   const d = new DOMParser().parseFromString(xml, 'application/xml');
-  if (d.querySelector('parsererror')) throw new Error('O ficheiro Final Draft parece estar danificado.');
+  if (d.querySelector('parsererror')) throw new Error(t('O ficheiro Final Draft parece estar danificado.'));
   const content = d.querySelector('FinalDraft > Content');
-  if (!content) throw new Error('Não encontrei o guião dentro do ficheiro Final Draft.');
+  if (!content) throw new Error(t('Não encontrei o guião dentro do ficheiro Final Draft.'));
   const blocos: any[] = [];
   content.querySelectorAll(':scope > Paragraph').forEach((p) => {
     const el = DE_FDX[p.getAttribute('Type') || ''] || 'acao';
@@ -84,7 +85,7 @@ export function deFdx(xml: string): { doc: any; titulo: string | null } {
 // Fountain (.fountain) — texto simples usado por muitos argumentistas
 // ---------------------------------------------------------------------------
 export function paraFountain(doc: PMNode, titulo: string, autor: string, rosto?: FolhaRosto): string {
-  const r = rosto || { credito: 'Escrito por', autores: autor, baseadoEm: '', versao: '', data: '', contacto: '', direitos: '', cartaz: false };
+  const r = rosto || { credito: t('Escrito por'), autores: autor, baseadoEm: '', versao: '', data: '', contacto: '', direitos: '', cartaz: false };
   const multi = (k: string, v: string) => (v.includes('\n') ? [`${k}:`, ...v.split('\n').map((l) => `    ${l}`)] : [`${k}: ${v}`]);
   const linhas: string[] = [
     `Title: ${titulo}`, `Credit: ${r.credito}`, ...multi('Author', r.autores || autor),
@@ -193,7 +194,7 @@ export function validarDoc(json: any): PMNode {
 }
 
 function rostoFdx(titulo: string, autor: string, rosto?: FolhaRosto): string {
-  const r = rosto || { credito: 'Escrito por', autores: autor, baseadoEm: '', versao: '', data: '', contacto: '', direitos: '', cartaz: false };
+  const r = rosto || { credito: t('Escrito por'), autores: autor, baseadoEm: '', versao: '', data: '', contacto: '', direitos: '', cartaz: false };
   const p = (t: string, al = 'Center') => `      <Paragraph Alignment="${al}" Type="General"><Text>${esc(t)}</Text></Paragraph>`;
   const linhas = [p(titulo.toUpperCase()), p(''), p(r.credito), ...(r.autores || autor).split('\n').filter(Boolean).map((a) => p(a))];
   if (r.baseadoEm) linhas.push(p(''), p(r.baseadoEm));

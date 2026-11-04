@@ -1,5 +1,6 @@
 import { Schema, NodeSpec } from 'prosemirror-model';
 import type { TipoProjeto } from '../types';
+import { t } from '../i18n';
 
 export type Elemento = 'cena' | 'acao' | 'personagem' | 'dialogo' | 'parentetico' | 'transicao';
 
@@ -99,7 +100,7 @@ const ROTULOS: Record<Elemento, string> = {
 const ROTULOS_TEATRO: Partial<Record<Elemento, string>> = { cena: 'Cena', acao: 'Didascália' };
 
 export function rotulo(el: Elemento, tipo: TipoProjeto): string {
-  return (tipo === 'teatro' && ROTULOS_TEATRO[el]) || ROTULOS[el];
+  return t((tipo === 'teatro' && ROTULOS_TEATRO[el]) || ROTULOS[el]);
 }
 
 /** Elemento seguinte ao carregar Enter no fim de um bloco */

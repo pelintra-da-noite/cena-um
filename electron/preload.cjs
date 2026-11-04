@@ -16,6 +16,7 @@ contextBridge.exposeInMainWorld('cena', {
   dadosImpressao: () => ipcRenderer.invoke('print:dados'),
   impressaoPronta: () => ipcRenderer.send('print:pronto'),
   porGuardar: (valor) => ipcRenderer.send('doc:por-guardar', valor),
+  preferencias: (p) => ipcRenderer.send('preferencias', p),
   guardarRecuperacao: (conteudo) => ipcRenderer.invoke('recuperacao:guardar', conteudo),
   lerRecuperacao: () => ipcRenderer.invoke('recuperacao:ler'),
   apagarRecuperacao: () => ipcRenderer.invoke('recuperacao:apagar'),

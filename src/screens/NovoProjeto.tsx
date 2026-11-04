@@ -2,12 +2,13 @@ import React, { useState } from 'react';
 import type { MetaProjeto, TipoProjeto } from '../types';
 import { IFechar, IImagem } from '../components/Icones';
 import { lerFicheiroComoDataUrl, reduzirImagem } from '../io/imagens';
+import { t, tp } from '../i18n';
 
 const TIPOS: { id: TipoProjeto; nome: string; sub: string; dur: number; un: string }[] = [
-  { id: 'curta', nome: 'Curta-metragem', sub: '5 a 30 páginas', dur: 15, un: 'minutos' },
-  { id: 'longa', nome: 'Longa-metragem', sub: '90 a 120 páginas', dur: 100, un: 'minutos' },
-  { id: 'serie', nome: 'Série de TV', sub: 'por episódio', dur: 45, un: 'min por episódio' },
-  { id: 'teatro', nome: 'Peça de teatro', sub: 'cenas e didascálias', dur: 75, un: 'minutos' }
+  { id: 'curta', get nome() { return t('Curta-metragem'); }, get sub() { return t('5 a 30 páginas'); }, dur: 15, get un() { return t('minutos'); } },
+  { id: 'longa', get nome() { return t('Longa-metragem'); }, get sub() { return t('90 a 120 páginas'); }, dur: 100, get un() { return t('minutos'); } },
+  { id: 'serie', get nome() { return t('Série de TV'); }, get sub() { return t('por episódio'); }, dur: 45, get un() { return t('min por episódio'); } },
+  { id: 'teatro', get nome() { return t('Peça de teatro'); }, get sub() { return t('cenas e didascálias'); }, dur: 75, get un() { return t('minutos'); } }
 ];
 
 interface Props {
@@ -27,7 +28,7 @@ export default function NovoProjeto({ tipoInicial, onCancelar, onCriar, avisar }
   const [arrastar, setArrastar] = useState(false);
   const [temporada, setTemporada] = useState('1');
   const [nEpisodios, setNEpisodios] = useState('6');
-  const [primeiro, setPrimeiro] = useState('Piloto');
+  const [primeiro, setPrimeiro] = useState(() => t('Piloto'));
   const atual = TIPOS.find((t) => t.id === tipo)!;
 
   const usarImagem = async (dataUrl: string) => {
@@ -41,7 +42,7 @@ export default function NovoProjeto({ tipoInicial, onCancelar, onCriar, avisar }
     e.preventDefault();
     setArrastar(false);
     const f = e.dataTransfer.files[0];
-    if (!f || !/^image\//.test(f.type)) { avisar('Arrasta uma imagem JPG ou PNG.'); return; }
+    if (!f || !/^image\//.test(f.type)) { avisar(t('Arrasta uma imagem JPG ou PNG.')); return; }
     usarImagem(await lerFicheiroComoDataUrl(f));
   };
 
@@ -49,7 +50,7 @@ export default function NovoProjeto({ tipoInicial, onCancelar, onCriar, avisar }
     const d = parseInt(duracao, 10);
     localStorage.setItem('cena-um:autor', autor.trim());
     onCriar({
-      titulo: titulo.trim() || 'Sem título',
+      titulo: titulo.trim() || t('Sem título'),
       tipo,
       autor: autor.trim(),
       duracaoPrevista: Number.isFinite(d) && d > 0 ? d : atual.dur,
@@ -67,20 +68,20 @@ export default function NovoProjeto({ tipoInicial, onCancelar, onCriar, avisar }
       <form className="dialogo" role="dialog" aria-labelledby="np-t" style={{ width: 920 }}
         onSubmit={(e) => { e.preventDefault(); criar(); }}>
         <div className="dialogo-cab">
-          <h2 id="np-t">Novo projeto</h2>
+          <h2 id="np-t">{t('Novo projeto')}</h2>
           <span className="flex1" />
-          <button type="button" className="btn-icone" aria-label="Fechar" onClick={onCancelar}><IFechar /></button>
+          <button type="button" className="btn-icone" aria-label={t('Fechar')} onClick={onCancelar}><IFechar /></button>
         </div>
 
         <div className="dialogo-corpo" style={{ display: 'flex', gap: 28 }}>
           <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 18 }}>
             <div className="campo">
-              <label htmlFor="np-titulo">Título</label>
-              <input id="np-titulo" className="entrada" autoFocus value={titulo} placeholder="Sem título" onChange={(e) => setTitulo(e.target.value)} />
+              <label htmlFor="np-titulo">{t('Título')}</label>
+              <input id="np-titulo" className="entrada" autoFocus value={titulo} placeholder={t('Sem título')} onChange={(e) => setTitulo(e.target.value)} />
             </div>
 
             <div className="campo">
-              <span className="rot" id="np-tipos">Tipo de história</span>
+              <span className="rot" id="np-tipos">{t('Tipo de história')}</span>
               <div className="tipos" role="radiogroup" aria-labelledby="np-tipos">
                 {TIPOS.map((t) => (
                   <button type="button" key={t.id} role="radio" aria-checked={tipo === t.id}
@@ -94,7 +95,7 @@ export default function NovoProjeto({ tipoInicial, onCancelar, onCriar, avisar }
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0,1fr))', gap: 12 }}>
               <div className="campo">
-                <label htmlFor="np-dur">Duração prevista</label>
+                <label htmlFor="np-dur">{t('Duração prevista')}</label>
                 <div className="entrada" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <input id="np-dur" inputMode="numeric" value={duracao} onChange={(e) => setDuracao(e.target.value.replace(/\D/g, ''))}
                     style={{ width: 60, border: 0, background: 'transparent', color: 'var(--texto)', fontSize: 14, outline: 'none' }} />
@@ -102,63 +103,63 @@ export default function NovoProjeto({ tipoInicial, onCancelar, onCriar, avisar }
                 </div>
               </div>
               <div className="campo">
-                <label htmlFor="np-autor">Autoria</label>
-                <input id="np-autor" className="entrada" value={autor} placeholder="O teu nome" onChange={(e) => setAutor(e.target.value)} />
+                <label htmlFor="np-autor">{t('Autoria')}</label>
+                <input id="np-autor" className="entrada" value={autor} placeholder={t('O teu nome')} onChange={(e) => setAutor(e.target.value)} />
               </div>
             </div>
 
             {tipo === 'serie' && (
               <div style={{ display: 'grid', gridTemplateColumns: '90px 130px minmax(0,1fr)', gap: 12 }}>
                 <div className="campo">
-                  <label htmlFor="np-temp">Temporada</label>
+                  <label htmlFor="np-temp">{t('Temporada')}</label>
                   <input id="np-temp" className="entrada" inputMode="numeric" value={temporada} onChange={(e) => setTemporada(e.target.value.replace(/\D/g, ''))} />
                 </div>
                 <div className="campo">
-                  <label htmlFor="np-neps">Episódios previstos</label>
+                  <label htmlFor="np-neps">{t('Episódios previstos')}</label>
                   <input id="np-neps" className="entrada" inputMode="numeric" value={nEpisodios} onChange={(e) => setNEpisodios(e.target.value.replace(/\D/g, ''))} />
                 </div>
                 <div className="campo">
-                  <label htmlFor="np-prim">Título do 1.º episódio</label>
-                  <input id="np-prim" className="entrada" value={primeiro} placeholder="Piloto" onChange={(e) => setPrimeiro(e.target.value)} />
+                  <label htmlFor="np-prim">{t('Título do 1.º episódio')}</label>
+                  <input id="np-prim" className="entrada" value={primeiro} placeholder={t('Piloto')} onChange={(e) => setPrimeiro(e.target.value)} />
                 </div>
               </div>
             )}
-            {tipo === 'serie' && <div className="aviso-tracejado" style={{ marginTop: -6 }}>Todos os episódios ficam neste projeto. Podes juntar, renomear e reordenar episódios a qualquer momento no ecrã Episódios.</div>}
+            {tipo === 'serie' && <div className="aviso-tracejado" style={{ marginTop: -6 }}>{t('Todos os episódios ficam neste projeto. Podes juntar, renomear e reordenar episódios a qualquer momento no ecrã Episódios.')}</div>}
             {tipo === 'curta' ? (
               <div className="opcao">
                 <div style={{ flex: 1 }}>
-                  <div className="t">Guia de estrutura para curtas</div>
-                  <div className="d">Perguntas por página enquanto escreves. Desliga quando quiseres.</div>
+                  <div className="t">{t('Guia de estrutura para curtas')}</div>
+                  <div className="d">{t('Perguntas por página enquanto escreves. Desliga quando quiseres.')}</div>
                 </div>
-                <button type="button" role="switch" aria-checked={guia} aria-label="Guia de estrutura"
+                <button type="button" role="switch" aria-checked={guia} aria-label={t('Guia de estrutura')}
                   className={'interruptor' + (guia ? ' on' : '')} onClick={() => setGuia(!guia)} />
               </div>
             ) : (
-              <div className="aviso-tracejado">O guia de estrutura só existe para curtas-metragens. Este tipo de projeto abre sem ele.</div>
+              <div className="aviso-tracejado">{t('O guia de estrutura só existe para curtas-metragens. Este tipo de projeto abre sem ele.')}</div>
             )}
           </div>
 
           <div style={{ width: 240, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <span className="rot" style={{ fontSize: 12, color: 'var(--texto-3)' }}>Cartaz <span style={{ color: 'var(--texto-4)' }}>(opcional)</span></span>
+            <span className="rot" style={{ fontSize: 12, color: 'var(--texto-3)' }}>{t('Cartaz')} <span style={{ color: 'var(--texto-4)' }}>{t('(opcional)')}</span></span>
             <button type="button" className={'zona-cartaz' + (arrastar ? ' arrastar' : '')} onClick={escolher}
               onDragOver={(e) => { e.preventDefault(); setArrastar(true); }} onDragLeave={() => setArrastar(false)} onDrop={largar}
-              aria-label={cartaz ? 'Trocar cartaz' : 'Escolher cartaz'}>
-              {cartaz ? <img src={cartaz} alt="Cartaz escolhido" /> : (
+              aria-label={cartaz ? t('Trocar cartaz') : t('Escolher cartaz')}>
+              {cartaz ? <img src={cartaz} alt={t('Cartaz escolhido')} /> : (
                 <>
                   <IImagem />
-                  <span style={{ fontWeight: 600, color: 'var(--texto)' }}>Arrasta o cartaz para aqui</span>
-                  <span style={{ fontSize: 12, color: 'var(--texto-3)', lineHeight: '17px', textAlign: 'center' }}>ou clica para escolher<br />JPG ou PNG, formato vertical</span>
+                  <span style={{ fontWeight: 600, color: 'var(--texto)' }}>{t('Arrasta o cartaz para aqui')}</span>
+                  <span style={{ fontSize: 12, color: 'var(--texto-3)', lineHeight: '17px', textAlign: 'center' }}>{t('ou clica para escolher')}<br />{t('JPG ou PNG, formato vertical')}</span>
                 </>
               )}
             </button>
-            {cartaz && <button type="button" className="btn-fantasma" style={{ alignSelf: 'flex-start', fontSize: 12 }} onClick={() => setCartaz(null)}>Remover cartaz</button>}
-            <span style={{ fontSize: 11, color: 'var(--texto-3)', lineHeight: '16px' }}>Aparece como capa nos projetos recentes e, se quiseres, na folha de rosto do PDF. Podes juntar ou trocar mais tarde.</span>
+            {cartaz && <button type="button" className="btn-fantasma" style={{ alignSelf: 'flex-start', fontSize: 12 }} onClick={() => setCartaz(null)}>{t('Remover cartaz')}</button>}
+            <span style={{ fontSize: 11, color: 'var(--texto-3)', lineHeight: '16px' }}>{t('Aparece como capa nos projetos recentes e, se quiseres, na folha de rosto do PDF. Podes juntar ou trocar mais tarde.')}</span>
           </div>
         </div>
 
         <div className="dialogo-rodape">
-          <button type="button" className="btn" onClick={onCancelar}>Cancelar</button>
-          <button type="submit" className="btn btn-ambar">Criar projeto</button>
+          <button type="button" className="btn" onClick={onCancelar}>{t('Cancelar')}</button>
+          <button type="submit" className="btn btn-ambar">{t('Criar projeto')}</button>
         </div>
       </form>
     </div>

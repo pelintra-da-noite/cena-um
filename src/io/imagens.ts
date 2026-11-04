@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 /** Reduz uma imagem para não inchar o ficheiro .cena (JPEG, lado maior = max) */
 export function reduzirImagem(dataUrl: string, max = 1400, qualidade = 0.86): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -15,7 +16,7 @@ export function reduzirImagem(dataUrl: string, max = 1400, qualidade = 0.86): Pr
       ctx.drawImage(img, 0, 0, w, h);
       resolve(c.toDataURL('image/jpeg', qualidade));
     };
-    img.onerror = () => reject(new Error('Não foi possível ler esta imagem.'));
+    img.onerror = () => reject(new Error(t('Não foi possível ler esta imagem.')));
     img.src = dataUrl;
   });
 }

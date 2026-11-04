@@ -1,8 +1,9 @@
 import type { Departamento, MembroEquipa, Projeto, TipoProjeto } from '../types';
+import { t } from '../i18n';
 
 const id = () => Math.random().toString(36).slice(2, 10);
 export const novoMembro = (funcao = ''): MembroEquipa => ({ id: id(), funcao, nome: '', contacto: '', residencia: '', notas: '' });
-export const novoDepartamento = (nome = 'Novo departamento', funcoes: string[] = ['']): Departamento => ({ id: id(), nome, membros: funcoes.map(novoMembro) });
+export const novoDepartamento = (nome = t('Novo departamento'), funcoes: string[] = ['']): Departamento => ({ id: id(), nome, membros: funcoes.map((f) => novoMembro(f)) });
 
 const CINEMA: [string, string[]][] = [
   ['Realização', ['Realizador', '1.º Assistente de realização', '2.º Assistente de realização', 'Anotador / continuidade']],
@@ -28,7 +29,7 @@ const TEATRO: [string, string[]][] = [
 ];
 
 export function equipaPadrao(tipo: TipoProjeto): Departamento[] {
-  return (tipo === 'teatro' ? TEATRO : CINEMA).map(([nome, funcoes]) => novoDepartamento(nome, funcoes));
+  return (tipo === 'teatro' ? TEATRO : CINEMA).map(([nome, funcoes]) => novoDepartamento(t(nome), funcoes.map((f) => (f ? t(f) : f))));
 }
 export const equipaDe = (p: Projeto): Departamento[] => p.equipa || equipaPadrao(p.meta.tipo);
 /** Projetos feitos na 0.6.0 chamavam «Imagem» ao departamento de fotografia */
@@ -37,7 +38,7 @@ export const preenchidos = (deps: Departamento[]) => deps.reduce((n, d) => n + d
 
 const cel = (s: string) => `"${(s || '').replace(/"/g, '""').replace(/\r?\n/g, ' ')}"`;
 export function equipaCsv(deps: Departamento[]): string {
-  const linhas = ['Departamento;Função;Nome;Contacto;Residência;Notas'];
+  const linhas = [['Departamento', 'Função', 'Nome', 'Contacto', 'Residência', 'Notas'].map((x) => t(x)).join(';')];
   for (const d of deps) for (const m of d.membros) linhas.push([d.nome, m.funcao, m.nome, m.contacto, m.residencia, m.notas].map(cel).join(';'));
   return '\uFEFF' + linhas.join('\r\n') + '\r\n';
 }

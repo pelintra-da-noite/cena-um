@@ -3,6 +3,7 @@ import type { EditorState } from 'prosemirror-state';
 import type { CategoriaLevantamento, Papel, Projeto } from '../types';
 import { formatarSegundos, Layout } from '../editor/layout';
 import { analisar, CATEGORIAS, formatarOitavos, titulo, CenaLevantamento } from '../editor/levantamento';
+import { t, tp } from '../i18n';
 
 interface Props {
   estado: EditorState;
@@ -27,10 +28,10 @@ function CampoElementos({ valores, exemplo, onMudar, rotulo }: { valores: string
       <div className="campo-lev-chips">
         {valores.map((v) => (
           <span key={v} className="chip-lev">{v}
-            <button aria-label={`Retirar ${v}`} onClick={() => onMudar(valores.filter((x) => x !== v))}>×</button>
+            <button aria-label={t('Retirar {v}', { v })} onClick={() => onMudar(valores.filter((x) => x !== v))}>×</button>
           </span>
         ))}
-        <input value={txt} placeholder={valores.length ? '+' : exemplo} aria-label={`Juntar a ${rotulo}`}
+        <input value={txt} placeholder={valores.length ? '+' : exemplo} aria-label={t('Juntar a {lista}', { lista: rotulo })}
           onChange={(e) => setTxt(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); juntar(); } }}
           onBlur={juntar} />
@@ -87,57 +88,57 @@ export default function VistaLevantamento({ estado, layout, projeto, papel, onPr
   return (
     <main className="vista">
       <div className="vista-cab">
-        <h1>Levantamento</h1>
-        <div className="segmentos" role="tablist" aria-label="Vista do levantamento">
-          <button role="tab" aria-selected={separador === 'cena'} className={separador === 'cena' ? 'ativo' : ''} onClick={() => setSeparador('cena')}>Por cena</button>
-          <button role="tab" aria-selected={separador === 'resumo'} className={separador === 'resumo' ? 'ativo' : ''} onClick={() => setSeparador('resumo')}>Resumo</button>
+        <h1>{t('Levantamento')}</h1>
+        <div className="segmentos" role="tablist" aria-label={t('Vista do levantamento')}>
+          <button role="tab" aria-selected={separador === 'cena'} className={separador === 'cena' ? 'ativo' : ''} onClick={() => setSeparador('cena')}>{t('Por cena')}</button>
+          <button role="tab" aria-selected={separador === 'resumo'} className={separador === 'resumo' ? 'ativo' : ''} onClick={() => setSeparador('resumo')}>{t('Resumo')}</button>
         </div>
-        <span className="vista-sub">{cenas.length} cena{cenas.length === 1 ? '' : 's'} · {formatarOitavos(resumo.oitavos)} páginas · {resumo.locais.length} loca{resumo.locais.length === 1 ? 'l' : 'is'} · {personagens.length} personage{personagens.length === 1 ? 'm' : 'ns'}</span>
+        <span className="vista-sub">{tp(cenas.length, '{n} cena', '{n} cenas')} · {t('{n} páginas', { n: formatarOitavos(resumo.oitavos) })} · {tp(resumo.locais.length, '{n} local', '{n} locais')} · {tp(personagens.length, '{n} personagem', '{n} personagens')}</span>
         <span className="flex1" />
         {separador === 'cena' && (
           <label className="procura" style={{ margin: 0, width: 240 }}>
-            <input placeholder="Procurar local, personagem ou adereço" value={filtro} onChange={(e) => setFiltro(e.target.value)} />
+            <input placeholder={t('Procurar local, personagem ou adereço')} value={filtro} onChange={(e) => setFiltro(e.target.value)} />
           </label>
         )}
-        <button className="btn btn-claro" onClick={onExportar}>Exportar</button>
+        <button className="btn btn-claro" onClick={onExportar}>{t('Exportar')}</button>
       </div>
 
-      {cenas.length === 0 && <div className="vista-vazia">Ainda não há cenas. Escreve um cabeçalho (INT. ou EXT.) no guião e o levantamento começa a encher-se sozinho.</div>}
+      {cenas.length === 0 && <div className="vista-vazia">{t('Ainda não há cenas. Escreve um cabeçalho (INT. ou EXT.) no guião e o levantamento começa a encher-se sozinho.')}</div>}
 
       {separador === 'cena' && (
         <div className="tec-lista">
           <div className="faixa-info" style={{ margin: 0 }}>
             <span className="ponto" style={{ background: 'var(--ambar)' }} />
-            Local, interior/exterior, momento do dia, tamanho e personagens são lidos do guião. O resto escreves aqui, separado por vírgulas, ou seleciona uma palavra no guião e usa o botão direito → «Juntar ao levantamento».
+            {t('Local, interior/exterior, momento do dia, tamanho e personagens são lidos do guião. O resto escreves aqui, separado por vírgulas, ou seleciona uma palavra no guião e usa o botão direito → «Juntar ao levantamento».')}
           </div>
           {visiveis.map((c) => (
             <section key={c.id} className="tec-cena">
               <div className="tec-cab">
                 <b className="num-ambar">{c.numero}</b>
-                <button className="sb-cena-titulo" onClick={() => onIrParaCena(c.indice)} title="Abrir a cena no guião">{c.cabecalho || 'Cena sem cabeçalho'}</button>
+                <button className="sb-cena-titulo" onClick={() => onIrParaCena(c.indice)} title={t('Abrir a cena no guião')}>{c.cabecalho || t('Cena sem cabeçalho')}</button>
                 <span className="flex1" />
                 <span className="etiqueta">{c.intExt}</span>
                 <span className="etiqueta">{c.momento}</span>
-                <span className="etiqueta">{formatarOitavos(c.oitavos)} pág.</span>
+                <span className="etiqueta">{t('{n} pág.', { n: formatarOitavos(c.oitavos) })}</span>
                 <span className="vista-sub">≈ {formatarSegundos(c.segundos)}</span>
               </div>
               <div className="lev-personagens">
-                <span className="campo-lev-rot">Local</span>
+                <span className="campo-lev-rot">{t('Local')}</span>
                 <div className="lev-local">
                   <span className="chip-lev forte">{titulo(c.local)}</span>
-                  <input className="lev-rodagem" value={rodagem(c.local)} placeholder="Local real de rodagem (morada, casa, estúdio…)"
-                    aria-label={`Local real de rodagem de ${titulo(c.local)}`} spellCheck onChange={(e) => mudarRodagem(c.local, e.target.value)} />
+                  <input className="lev-rodagem" value={rodagem(c.local)} placeholder={t('Local real de rodagem (morada, casa, estúdio…)')}
+                    aria-label={t('Local real de rodagem de {local}', { local: titulo(c.local) })} spellCheck onChange={(e) => mudarRodagem(c.local, e.target.value)} />
                   {cenas.filter((x) => x.local === c.local).length > 1 && (
-                    <span className="vista-sub">vale para as {cenas.filter((x) => x.local === c.local).length} cenas neste local</span>
+                    <span className="vista-sub">{t('vale para as {n} cenas neste local', { n: cenas.filter((x) => x.local === c.local).length })}</span>
                   )}
                 </div>
               </div>
               <div className="lev-personagens">
-                <span className="campo-lev-rot">Personagens</span>
+                <span className="campo-lev-rot">{t('Personagens')}</span>
                 <div className="campo-lev-chips">
                   {c.falam.map((n) => <span key={n} className="chip-lev forte">{titulo(n)}</span>)}
-                  {c.aparecem.map((n) => <span key={n} className="chip-lev" title="Aparece sem falar">{titulo(n)} · sem falas</span>)}
-                  {!c.falam.length && !c.aparecem.length && <span className="vista-sub">Nenhuma personagem detetada</span>}
+                  {c.aparecem.map((n) => <span key={n} className="chip-lev" title={t('Aparece sem falar')}>{titulo(n)} · {t('sem falas')}</span>)}
+                  {!c.falam.length && !c.aparecem.length && <span className="vista-sub">{t('Nenhuma personagem detetada')}</span>}
                 </div>
               </div>
               <div className="grelha-lev">
@@ -154,20 +155,20 @@ export default function VistaLevantamento({ estado, layout, projeto, papel, onPr
       {separador === 'resumo' && cenas.length > 0 && (
         <div className="tec-lista">
           <div className="resumo-totais">
-            {resumo.intExt.map(([k, l]) => <div key={k} className="total"><b>{l.length}</b><span>{k === '—' ? 'Sem INT/EXT' : k}</span></div>)}
-            {resumo.momentos.map(([k, l]) => <div key={'m' + k} className="total"><b>{l.length}</b><span>{k === '—' ? 'Sem momento' : titulo(k)}</span></div>)}
+            {resumo.intExt.map(([k, l]) => <div key={k} className="total"><b>{l.length}</b><span>{k === '—' ? t('Sem INT/EXT') : k}</span></div>)}
+            {resumo.momentos.map(([k, l]) => <div key={'m' + k} className="total"><b>{l.length}</b><span>{k === '—' ? t('Sem momento') : titulo(k)}</span></div>)}
           </div>
 
           <section className="tec-cena">
-            <h2 className="resumo-tit">Locais</h2>
+            <h2 className="resumo-tit">{t('Locais')}</h2>
             <table className="tec-tabela">
-              <thead><tr><th>Local</th><th style={{ width: 260 }}>Local de rodagem</th><th style={{ width: 110 }}>INT/EXT</th><th style={{ width: 200 }}>Momentos</th><th style={{ width: 90 }}>Páginas</th><th style={{ width: 110 }}>Duração</th><th style={{ width: 200 }}>Cenas</th></tr></thead>
+              <thead><tr><th>{t('Local')}</th><th style={{ width: 260 }}>{t('Local de rodagem')}</th><th style={{ width: 110 }}>{t('INT/EXT')}</th><th style={{ width: 200 }}>{t('Momentos')}</th><th style={{ width: 90 }}>{t('Páginas')}</th><th style={{ width: 110 }}>{t('Duração')}</th><th style={{ width: 200 }}>{t('Cenas')}</th></tr></thead>
               <tbody>
                 {resumo.locais.map(([local, l]) => (
                   <tr key={local}>
                     <td><b>{titulo(local)}</b></td>
-                    <td><input className="lev-rodagem" style={{ width: '100%' }} value={rodagem(local)} placeholder="Onde vai ser filmado"
-                      aria-label={`Local real de rodagem de ${titulo(local)}`} spellCheck onChange={(e) => mudarRodagem(local, e.target.value)} /></td>
+                    <td><input className="lev-rodagem" style={{ width: '100%' }} value={rodagem(local)} placeholder={t('Onde vai ser filmado')}
+                      aria-label={t('Local real de rodagem de {local}', { local: titulo(local) })} spellCheck onChange={(e) => mudarRodagem(local, e.target.value)} /></td>
                     <td>{[...new Set(l.map((c) => c.intExt))].join(', ')}</td>
                     <td>{[...new Set(l.map((c) => titulo(c.momento)))].join(', ')}</td>
                     <td>{formatarOitavos(l.reduce((s, c) => s + c.oitavos, 0))}</td>
@@ -180,9 +181,9 @@ export default function VistaLevantamento({ estado, layout, projeto, papel, onPr
           </section>
 
           <section className="tec-cena">
-            <h2 className="resumo-tit">Personagens</h2>
+            <h2 className="resumo-tit">{t('Personagens')}</h2>
             <table className="tec-tabela">
-              <thead><tr><th>Personagem</th><th style={{ width: 80 }}>Falas</th><th style={{ width: 240 }}>Cenas com falas</th><th style={{ width: 240 }}>Cenas sem falas</th><th style={{ width: 90 }}>Total</th></tr></thead>
+              <thead><tr><th>{t('Personagem')}</th><th style={{ width: 80 }}>{t('Falas')}</th><th style={{ width: 240 }}>{t('Cenas com falas')}</th><th style={{ width: 240 }}>{t('Cenas sem falas')}</th><th style={{ width: 90 }}>{t('Total')}</th></tr></thead>
               <tbody>
                 {personagens.map((p) => (
                   <tr key={p.nome}>
@@ -198,10 +199,10 @@ export default function VistaLevantamento({ estado, layout, projeto, papel, onPr
           </section>
 
           <section className="tec-cena">
-            <h2 className="resumo-tit">Elementos de produção</h2>
-            {resumo.elementos.length === 0 ? <div className="vista-sub">Ainda não registaste adereços, guarda-roupa ou outros elementos. Faz isso no separador «Por cena».</div> : (
+            <h2 className="resumo-tit">{t('Elementos de produção')}</h2>
+            {resumo.elementos.length === 0 ? <div className="vista-sub">{t('Ainda não registaste adereços, guarda-roupa ou outros elementos. Faz isso no separador «Por cena».')}</div> : (
               <table className="tec-tabela">
-                <thead><tr><th style={{ width: 180 }}>Categoria</th><th>Elemento</th><th style={{ width: 240 }}>Cenas</th></tr></thead>
+                <thead><tr><th style={{ width: 180 }}>{t('Categoria')}</th><th>{t('Elemento')}</th><th style={{ width: 240 }}>{t('Cenas')}</th></tr></thead>
                 <tbody>
                   {resumo.elementos.map((e) => (
                     <tr key={e.cat + e.nome}><td>{e.cat}</td><td><b>{e.nome}</b></td><td>{numeros(e.cenas)}</td></tr>

@@ -2,6 +2,7 @@ import type { EditorState, Transaction } from 'prosemirror-state';
 import type { EditorView } from 'prosemirror-view';
 import type { MarkType } from 'prosemirror-model';
 import { schema, Alinhamento } from './schema';
+import { t } from '../i18n';
 
 type NomeMarca = 'negrito' | 'italico' | 'sublinhado' | 'riscado';
 type NomeValor = 'fonte' | 'tamanho' | 'cor';
@@ -65,7 +66,7 @@ export function lerFormatacao(state: EditorState): EstadoFormatacao {
 
 function aplicar(view: EditorView, f: (tr: Transaction, z: { from: number; to: number } | null) => void) {
   const tr = view.state.tr;
-  tr.setMeta('rotulo', 'Mudaste a formatação');
+  tr.setMeta('rotulo', t('Mudaste a formatação'));
   f(tr, alvo(view.state));
   view.dispatch(tr);
   view.focus();

@@ -1,6 +1,7 @@
 import type { Node as PMNode } from 'prosemirror-model';
 import type { EditorState, Transaction } from 'prosemirror-state';
 import { isHistoryTransaction } from 'prosemirror-history';
+import { t } from '../i18n';
 
 /**
  * Histórico de momentos do guião (para recuperar enganos).
@@ -29,9 +30,9 @@ function cenaDoCursor(state: EditorState): string {
   let nome = '';
   let num = 0;
   state.doc.forEach((n, _p, i) => {
-    if (n.type.name === 'cena') { num++; if (i <= idx) nome = `cena ${num}`; }
+    if (n.type.name === 'cena') { num++; if (i <= idx) nome = t('cena {n}', { n: num }); }
   });
-  return nome || 'início do guião';
+  return nome || t('início do guião');
 }
 
 /** Dá um nome à transação, ou null se for escrita normal (agrupada por pausas) */
@@ -39,11 +40,11 @@ export function rotuloDe(tr: Transaction, antes: EditorState): string | null {
   const meta = tr.getMeta('rotulo');
   if (meta) return meta;
   const ev = tr.getMeta('uiEvent');
-  if (ev === 'paste') return `Colaste texto na ${cenaDoCursor(antes)}`;
-  if (ev === 'cut') return `Cortaste texto na ${cenaDoCursor(antes)}`;
-  if (ev === 'drop') return 'Arrastaste texto';
+  if (ev === 'paste') return t('Colaste texto na {onde}', { onde: cenaDoCursor(antes) });
+  if (ev === 'cut') return t('Cortaste texto na {onde}', { onde: cenaDoCursor(antes) });
+  if (ev === 'drop') return t('Arrastaste texto');
   const apagado = antes.doc.content.size - tr.doc.content.size;
-  if (apagado > 200) return `Apagaste um bloco de texto na ${cenaDoCursor(antes)}`;
+  if (apagado > 200) return t('Apagaste um bloco de texto na {onde}', { onde: cenaDoCursor(antes) });
   return null;
 }
 
@@ -70,7 +71,7 @@ export class Historico {
     if (isHistoryTransaction(tr)) { this.descarregar(); return; }
     const r = rotuloDe(tr, antes);
     if (r) { this.registar(r, tr.doc); return; }
-    const rotulo = `Escreveste na ${cenaDoCursor(antes)}`;
+    const rotulo = t('Escreveste na {onde}', { onde: cenaDoCursor(antes) });
     if (this.pendente && this.pendente.rotulo !== rotulo) this.descarregar();
     this.pendente = { rotulo, obterDoc: () => depois().doc };
     if (this.timer) window.clearTimeout(this.timer);

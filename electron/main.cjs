@@ -11,6 +11,9 @@ let janela = null;
 let ficheiroInicial = null;
 let podeFechar = false;
 let porGuardar = false;
+// Língua da interface (vem do renderer). Textos do processo principal: L('português', 'english')
+let idioma = 'pt';
+const L = (pt, en) => (idioma === 'en' ? en : pt);
 
 // ---------- registo de erros (ajuda a diagnosticar problemas no PC de quem usa) ----------
 function registar(...partes) {
@@ -83,12 +86,12 @@ function criarJanela() {
     e.preventDefault();
     const r = dialog.showMessageBoxSync(janela, {
       type: 'warning',
-      buttons: ['Guardar', 'Não guardar', 'Cancelar'],
+      buttons: [L('Guardar', 'Save'), L('Não guardar', "Don't save"), L('Cancelar', 'Cancel')],
       defaultId: 0,
       cancelId: 2,
       title: 'Cena Um',
-      message: 'Tens alterações por guardar.',
-      detail: 'Queres guardar o guião antes de fechar?'
+      message: L('Tens alterações por guardar.', 'You have unsaved changes.'),
+      detail: L('Queres guardar o guião antes de fechar?', 'Do you want to save the script before closing?')
     });
     if (r === 0) janela.webContents.send('app:guardar-e-fechar');
     if (r === 1) { try { fs.unlinkSync(path.join(app.getPath('userData'), 'recuperacao.cena')); } catch {} podeFechar = true; janela.close(); }
@@ -122,19 +125,19 @@ function menuNativo(params) {
   const itens = [];
   if (params.misspelledWord) {
     const sugestoes = params.dictionarySuggestions.slice(0, 6);
-    if (sugestoes.length === 0) itens.push({ label: 'Sem sugestões', enabled: false });
+    if (sugestoes.length === 0) itens.push({ label: L('Sem sugestões', 'No suggestions'), enabled: false });
     for (const s of sugestoes) itens.push({ label: s, click: () => janela.webContents.replaceMisspelling(s) });
     itens.push({ type: 'separator' });
-    itens.push({ label: 'Adicionar ao dicionário', click: () => janela.webContents.session.addWordToSpellCheckerDictionary(params.misspelledWord) });
+    itens.push({ label: L('Adicionar ao dicionário', 'Add to dictionary'), click: () => janela.webContents.session.addWordToSpellCheckerDictionary(params.misspelledWord) });
     itens.push({ type: 'separator' });
   }
   if (params.isEditable) {
-    itens.push({ label: 'Cortar', role: 'cut', enabled: params.editFlags.canCut });
-    itens.push({ label: 'Copiar', role: 'copy', enabled: params.editFlags.canCopy });
-    itens.push({ label: 'Colar', role: 'paste', enabled: params.editFlags.canPaste });
-    itens.push({ label: 'Selecionar tudo', role: 'selectAll' });
+    itens.push({ label: L('Cortar', 'Cut'), role: 'cut', enabled: params.editFlags.canCut });
+    itens.push({ label: L('Copiar', 'Copy'), role: 'copy', enabled: params.editFlags.canCopy });
+    itens.push({ label: L('Colar', 'Paste'), role: 'paste', enabled: params.editFlags.canPaste });
+    itens.push({ label: L('Selecionar tudo', 'Select all'), role: 'selectAll' });
   } else if (params.selectionText) {
-    itens.push({ label: 'Copiar', role: 'copy' });
+    itens.push({ label: L('Copiar', 'Copy'), role: 'copy' });
   }
   if (itens.length) Menu.buildFromTemplate(itens).popup({ window: janela });
 }
@@ -176,14 +179,22 @@ ipcMain.handle('recuperacao:ler', () => {
 });
 ipcMain.handle('recuperacao:apagar', () => { try { fs.unlinkSync(RECUP()); } catch {} return true; });
 
+// Língua da interface e do corretor ortográfico
+const LINGUAS_CORRETOR = { pt: ['pt-PT'], en: ['en-US'], ambos: ['pt-PT', 'en-US'] };
+ipcMain.on('preferencias', (_e, p) => {
+  if (p && (p.idioma === 'pt' || p.idioma === 'en')) idioma = p.idioma;
+  const linguas = LINGUAS_CORRETOR[p && p.corretor] || LINGUAS_CORRETOR.pt;
+  try { if (janela) janela.webContents.session.setSpellCheckerLanguages(linguas); } catch (e) { registar('corretor:', e); }
+});
+
 ipcMain.on('doc:por-guardar', (_e, valor) => { porGuardar = !!valor; });
 ipcMain.on('app:fechar-agora', () => { podeFechar = true; if (janela) janela.close(); });
 
 ipcMain.handle('ficheiro:abrir', async () => {
   const r = await dialog.showOpenDialog(janela, {
-    title: 'Abrir guião',
+    title: L('Abrir guião', 'Open script'),
     filters: [
-      { name: 'Guiões', extensions: ['cena', 'fdx', 'fountain', 'txt'] },
+      { name: L('Guiões', 'Scripts'), extensions: ['cena', 'fdx', 'fountain', 'txt'] },
       { name: 'Cena Um', extensions: ['cena'] },
       { name: 'Final Draft', extensions: ['fdx'] },
       { name: 'Fountain', extensions: ['fountain', 'txt'] }
@@ -203,8 +214,8 @@ ipcMain.handle('ficheiro:guardar', async (_e, { caminho, conteudo, nomeSugerido 
   let destino = caminho;
   if (!destino) {
     const r = await dialog.showSaveDialog(janela, {
-      title: 'Guardar guião',
-      defaultPath: (nomeSugerido || 'Sem título') + '.cena',
+      title: L('Guardar guião', 'Save script'),
+      defaultPath: (nomeSugerido || L('Sem título', 'Untitled')) + '.cena',
       filters: [{ name: 'Cena Um', extensions: ['cena'] }]
     });
     if (r.canceled || !r.filePath) return null;
@@ -218,8 +229,8 @@ ipcMain.handle('ficheiro:guardar', async (_e, { caminho, conteudo, nomeSugerido 
 
 ipcMain.handle('ficheiro:exportar-texto', async (_e, { conteudo, nomeSugerido, extensao, nomeFormato }) => {
   const r = await dialog.showSaveDialog(janela, {
-    title: 'Exportar',
-    defaultPath: (nomeSugerido || 'Sem título') + '.' + extensao,
+    title: L('Exportar', 'Export'),
+    defaultPath: (nomeSugerido || L('Sem título', 'Untitled')) + '.' + extensao,
     filters: [{ name: nomeFormato, extensions: [extensao] }]
   });
   if (r.canceled || !r.filePath) return null;
@@ -229,7 +240,7 @@ ipcMain.handle('ficheiro:exportar-texto', async (_e, { conteudo, nomeSugerido, e
 
 ipcMain.handle('ficheiro:exportar-pasta', async (_e, ficheiros) => {
   const r = await dialog.showOpenDialog(janela, {
-    title: 'Escolher a pasta para os episódios',
+    title: L('Escolher a pasta para os episódios', 'Choose the folder for the episodes'),
     properties: ['openDirectory', 'createDirectory']
   });
   if (r.canceled || !r.filePaths[0]) return null;
@@ -243,8 +254,8 @@ ipcMain.handle('ficheiro:exportar-pasta', async (_e, ficheiros) => {
 
 ipcMain.handle('ficheiro:escolher-imagens', async (_e, multiplas) => {
   const r = await dialog.showOpenDialog(janela, {
-    title: 'Escolher imagem',
-    filters: [{ name: 'Imagens', extensions: ['jpg', 'jpeg', 'png', 'webp'] }],
+    title: L('Escolher imagem', 'Choose image'),
+    filters: [{ name: L('Imagens', 'Images'), extensions: ['jpg', 'jpeg', 'png', 'webp'] }],
     properties: multiplas ? ['openFile', 'multiSelections'] : ['openFile']
   });
   if (r.canceled) return [];
@@ -268,7 +279,7 @@ let dadosImpressao = null;
 ipcMain.handle('print:dados', () => dadosImpressao);
 ipcMain.handle('pdf:exportar', async (_e, dados) => {
   const r = await dialog.showSaveDialog(janela, {
-    title: 'Exportar PDF',
+    title: L('Exportar PDF', 'Export PDF'),
     defaultPath: (dados.nomeSugerido || 'Sem título') + '.pdf',
     filters: [{ name: 'PDF', extensions: ['pdf'] }]
   });

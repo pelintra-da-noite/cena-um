@@ -6,6 +6,7 @@ import type { MetaProjeto, Papel, Plano, Quadro, PersonagemInfo, Projeto, Depart
 import { analisar, CATEGORIAS, formatarOitavos, titulo as tituloLev } from '../editor/levantamento';
 import { formatarSegundos } from '../editor/layout';
 import { rostoDe, dataRosto } from '../io/rosto';
+import { t, tp, locale } from '../i18n';
 
 interface Dados {
   guiao: any;
@@ -76,12 +77,12 @@ function renderUnidade(d: Dados) {
       <div className="impressao">
         <style>{`@page { size: ${d.papel === 'carta' ? 'letter' : 'A4'} landscape; margin: 0; } :root { color-scheme: light; } html, body, #root { height: auto; overflow: visible; background: #fff !important; }`}</style>
         <section className="pagina paisagem">
-          <div className="tp-cab"><b>{d.meta.titulo || 'Sem título'} — equipa</b><span>{deps.reduce((n, x) => n + x.membros.length, 0)} pessoas · {new Date().toLocaleDateString('pt-PT')}</span></div>
+          <div className="tp-cab"><b>{d.meta.titulo || t('Sem título')} — {t('equipa')}</b><span>{tp(deps.reduce((n, x) => n + x.membros.length, 0), '{n} pessoa', '{n} pessoas')} · {new Date().toLocaleDateString(locale())}</span></div>
           {deps.map((dep) => (
             <div key={dep.id} className="tp-cena" style={{ breakInside: 'auto' }}>
               <h3>{dep.nome}</h3>
               <table className="tp">
-                <thead><tr><th style={{ width: '20%' }}>Função</th><th style={{ width: '20%' }}>Nome</th><th style={{ width: '24%' }}>Contacto</th><th style={{ width: '18%' }}>Residência</th><th>Notas</th></tr></thead>
+                <thead><tr><th style={{ width: '20%' }}>{t('Função')}</th><th style={{ width: '20%' }}>{t('Nome')}</th><th style={{ width: '24%' }}>{t('Contacto')}</th><th style={{ width: '18%' }}>{t('Residência')}</th><th>{t('Notas')}</th></tr></thead>
                 <tbody>
                   {dep.membros.map((m) => (
                     <tr key={m.id}><td>{m.funcao}</td><td><b>{m.nome}</b></td><td>{m.contacto}</td><td>{m.residencia}</td><td>{m.notas}</td></tr>
@@ -104,19 +105,19 @@ function renderUnidade(d: Dados) {
       <div className="impressao">
         <style>{`@page { size: ${d.papel === 'carta' ? 'letter' : 'A4'} landscape; margin: 0; } :root { color-scheme: light; } html, body, #root { height: auto; overflow: visible; background: #fff !important; }`}</style>
         <section className="pagina paisagem">
-          <div className="tp-cab"><b>{d.meta.titulo || 'Sem título'}{d.subtitulo ? ` · ${d.subtitulo}` : ''} — levantamento</b><span>{d.meta.autor} · {cenas.length} cenas · {formatarOitavos(cenas.reduce((x, c) => x + c.oitavos, 0))} páginas</span></div>
+          <div className="tp-cab"><b>{d.meta.titulo || t('Sem título')}{d.subtitulo ? ` · ${d.subtitulo}` : ''} — {t('levantamento')}</b><span>{d.meta.autor} · {tp(cenas.length, '{n} cena', '{n} cenas')} · {t('{n} páginas', { n: formatarOitavos(cenas.reduce((x, c) => x + c.oitavos, 0)) })}</span></div>
           <table className="tp">
             <thead><tr>
-              <th style={{ width: '5%' }}>Cena</th><th style={{ width: '24%' }}>Cabeçalho</th><th style={{ width: '7%' }}>Int/Ext</th><th style={{ width: '9%' }}>Momento</th>
-              <th style={{ width: '7%' }}>Págs.</th><th style={{ width: '18%' }}>Personagens</th><th>Elementos de produção</th>
+              <th style={{ width: '5%' }}>{t('Cena')}</th><th style={{ width: '24%' }}>{t('Cabeçalho')}</th><th style={{ width: '7%' }}>{t('Int/Ext')}</th><th style={{ width: '9%' }}>{t('Momento')}</th>
+              <th style={{ width: '7%' }}>{t('Págs.')}</th><th style={{ width: '18%' }}>{t('Personagens')}</th><th>{t('Elementos de produção')}</th>
             </tr></thead>
             <tbody>
               {cenas.map((c) => (
                 <tr key={c.id}>
                   <td><b>{c.numero}</b></td>
-                  <td className="ac">{c.cabecalho}{d.locais?.[c.local]?.rodagem ? <div style={{ fontFamily: 'var(--ui)', color: '#555' }}>Rodagem: {d.locais[c.local].rodagem}</div> : null}</td>
+                  <td className="ac">{c.cabecalho}{d.locais?.[c.local]?.rodagem ? <div style={{ fontFamily: 'var(--ui)', color: '#555' }}>{t('Rodagem:')} {d.locais[c.local].rodagem}</div> : null}</td>
                   <td>{c.intExt}</td><td>{tituloLev(c.momento)}</td><td>{formatarOitavos(c.oitavos)}</td>
-                  <td>{c.falam.map(tituloLev).join(', ')}{c.aparecem.length ? <div style={{ color: '#555' }}>sem falas: {c.aparecem.map(tituloLev).join(', ')}</div> : null}</td>
+                  <td>{c.falam.map(tituloLev).join(', ')}{c.aparecem.length ? <div style={{ color: '#555' }}>{t('sem falas:')} {c.aparecem.map(tituloLev).join(', ')}</div> : null}</td>
                   <td>{CATEGORIAS.filter((k) => (c.elementos[k.id] || []).length).map((k) => (
                     <div key={k.id}><b>{k.nome}:</b> {(c.elementos[k.id] || []).join(', ')}</div>
                   ))}</td>
@@ -125,9 +126,9 @@ function renderUnidade(d: Dados) {
             </tbody>
           </table>
           <div className="tp-cena" style={{ marginTop: '18pt' }}>
-            <h3>Por local</h3>
+            <h3>{t('Por local')}</h3>
             <table className="tp">
-              <thead><tr><th>Local</th><th style={{ width: '22%' }}>Local de rodagem</th><th style={{ width: '10%' }}>Int/Ext</th><th style={{ width: '18%' }}>Momentos</th><th style={{ width: '9%' }}>Págs.</th><th style={{ width: '11%' }}>Duração</th><th style={{ width: '22%' }}>Cenas</th></tr></thead>
+              <thead><tr><th>{t('Local')}</th><th style={{ width: '22%' }}>{t('Local de rodagem')}</th><th style={{ width: '10%' }}>{t('Int/Ext')}</th><th style={{ width: '18%' }}>{t('Momentos')}</th><th style={{ width: '9%' }}>{t('Págs.')}</th><th style={{ width: '11%' }}>{t('Duração')}</th><th style={{ width: '22%' }}>{t('Cenas')}</th></tr></thead>
               <tbody>
                 {[...locais.entries()].map(([l, cs]) => (
                   <tr key={l}><td><b>{tituloLev(l)}</b></td><td>{d.locais?.[l]?.rodagem || '—'}</td><td>{[...new Set(cs.map((c) => c.intExt))].join(', ')}</td>
@@ -140,9 +141,9 @@ function renderUnidade(d: Dados) {
             </table>
           </div>
           <div className="tp-cena">
-            <h3>Por personagem</h3>
+            <h3>{t('Por personagem')}</h3>
             <table className="tp">
-              <thead><tr><th>Personagem</th><th style={{ width: '8%' }}>Falas</th><th style={{ width: '30%' }}>Cenas com falas</th><th style={{ width: '30%' }}>Cenas sem falas</th></tr></thead>
+              <thead><tr><th>{t('Personagem')}</th><th style={{ width: '8%' }}>{t('Falas')}</th><th style={{ width: '30%' }}>{t('Cenas com falas')}</th><th style={{ width: '30%' }}>{t('Cenas sem falas')}</th></tr></thead>
               <tbody>
                 {personagens.map((p) => (
                   <tr key={p.nome}><td><b>{tituloLev(p.nome)}</b>{p.descricao ? <div style={{ color: '#555' }}>{p.descricao}</div> : null}</td>
@@ -163,18 +164,18 @@ function renderUnidade(d: Dados) {
       <div className="impressao">
         <style>{`@page { size: ${d.papel === 'carta' ? 'letter' : 'A4'} landscape; margin: 0; } :root { color-scheme: light; } html, body, #root { height: auto; overflow: visible; background: #fff !important; }`}</style>
         <section className="pagina paisagem" style={estilo}>
-          <div className="tp-cab"><b>{d.meta.titulo || 'Sem título'}{d.subtitulo ? ` · ${d.subtitulo}` : ''} — guião técnico</b><span>{d.meta.autor}</span></div>
+          <div className="tp-cab"><b>{d.meta.titulo || t('Sem título')}{d.subtitulo ? ` · ${d.subtitulo}` : ''} — {t('guião técnico')}</b><span>{d.meta.autor}</span></div>
           {layout.cenas.map((c) => {
             const planos = (d.tecnico || {})[c.id] || [];
             const quadros = (d.storyboard || {})[c.id] || [];
             return (
               <div className="tp-cena" key={c.id}>
                 <h3>{c.numero}. {c.texto}<small>{c.personagens.map(titulo).join(', ')}</small></h3>
-                {planos.length === 0 ? <div style={{ color: '#666' }}>Sem planificação.</div> : (
+                {planos.length === 0 ? <div style={{ color: '#666' }}>{t('Sem planificação.')}</div> : (
                   <table className="tp">
                     <thead><tr>
-                      <th style={{ width: '6%' }}>Plano</th><th style={{ width: '15%' }}>Storyboard</th><th style={{ width: '12%' }}>Escala</th>
-                      <th style={{ width: '11%' }}>Movimento</th><th>Ação</th><th style={{ width: '15%' }}>Som</th><th style={{ width: '7%' }}>Dur.</th>
+                      <th style={{ width: '6%' }}>{t('Plano')}</th><th style={{ width: '15%' }}>{t('Storyboard')}</th><th style={{ width: '12%' }}>{t('Escala')}</th>
+                      <th style={{ width: '11%' }}>{t('Movimento')}</th><th>{t('Ação')}</th><th style={{ width: '15%' }}>{t('Som')}</th><th style={{ width: '7%' }}>{t('Dur.')}</th>
                     </tr></thead>
                     <tbody>
                       {planos.map((p, i) => {
@@ -183,7 +184,7 @@ function renderUnidade(d: Dados) {
                           <tr key={p.id}>
                             <td><b>{c.numero}.{i + 1}</b></td>
                             <td>{q ? <img src={q.src} alt="" /> : ''}</td>
-                            <td>{p.escala}</td><td>{p.movimento}</td>
+                            <td>{p.escala ? t(p.escala) : ''}</td><td>{p.movimento ? t(p.movimento) : ''}</td>
                             <td className="ac">{p.acao}</td><td>{p.som}</td><td>{p.duracao ? `${p.duracao}${/\d$/.test(p.duracao) ? ' s' : ''}` : ''}</td>
                           </tr>
                         );
@@ -222,7 +223,7 @@ function renderUnidade(d: Dados) {
         const comCartazR = (d.cartaz || r.cartaz) && !!d.meta.cartaz;
         return (
           <section className="pagina rosto" style={estiloPagina}>
-            <div className="t" style={{ marginTop: comCartazR ? '1.2in' : '3in' }}>{d.meta.titulo || 'Sem título'}</div>
+            <div className="t" style={{ marginTop: comCartazR ? '1.2in' : '3in' }}>{d.meta.titulo || t('Sem título')}</div>
             {d.subtitulo && <div style={{ marginTop: '12pt' }}>{d.subtitulo}</div>}
             <div style={{ marginTop: '24pt' }}>{r.credito}</div>
             {r.autores.split('\n').filter(Boolean).map((a, i) => <div key={i} style={{ marginTop: i ? 0 : '12pt' }}>{a}</div>)}
@@ -235,7 +236,7 @@ function renderUnidade(d: Dados) {
       })()}
       {teatro && d.rosto && (layout.personagens.length > 0 || (d.personagens || []).length > 0) && (
         <section className="pagina elenco" style={estiloPagina}>
-          <div className="el-titulo">PERSONAGENS</div>
+          <div className="el-titulo">{t('PERSONAGENS')}</div>
           {[...layout.personagens, ...(d.personagens || []).filter((p) => p.manual && !layout.personagens.includes(p.nome)).map((p) => p.nome)].map((nome) => {
             const info = (d.personagens || []).find((p) => p.nome === nome);
             return <p key={nome} className="el-elenco"><b>{nome}</b>{info?.descricao ? `, ${info.descricao}` : ''}</p>;

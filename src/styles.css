@@ -784,3 +784,4 @@ input.nome-ato:focus { border-color: var(--ambar); background: var(--fundo-1); }
 .chip-sel { height: 22px; border-radius: 6px; border: 1px solid var(--ambar); background: var(--fundo-1); color: var(--texto); font-size: 11px; max-width: 220px; }
 .cp-repor { align-self: flex-start; font-size: 12px; }
 .impressao .tp-cena h3 { break-after: avoid; }
+.grupo-elementos button { white-space: nowrap; }

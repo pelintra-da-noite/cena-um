@@ -1,13 +1,14 @@
 import type { Episodio, Projeto } from '../types';
 import { documentoInicial, novoId } from '../editor/schema';
+import { t } from '../i18n';
 
 export function novoEpisodio(temporada: number, numero: number, titulo = ''): Episodio {
-  return { id: novoId(), temporada, numero, titulo: titulo || `Episódio ${numero}`, sinopse: '', guiao: documentoInicial(), storyboard: {}, tecnico: {}, levantamento: {} };
+  return { id: novoId(), temporada, numero, titulo: titulo || t('Episódio {n}', { n: numero }), sinopse: '', guiao: documentoInicial(), storyboard: {}, tecnico: {}, levantamento: {} };
 }
 
 export const ordenar = (l: Episodio[]) => [...l].sort((a, b) => a.temporada - b.temporada || a.numero - b.numero);
 
-export const codigo = (e: Pick<Episodio, 'temporada' | 'numero'>) => `T${e.temporada} · E${String(e.numero).padStart(2, '0')}`;
+export const codigo = (e: Pick<Episodio, 'temporada' | 'numero'>) => `${t('T')}${e.temporada} · E${String(e.numero).padStart(2, '0')}`;
 
 /** Copia o trabalho do episódio aberto (campos de topo) para a lista de episódios */
 export function sincronizar(p: Projeto): Projeto {
@@ -32,7 +33,7 @@ export function abrirEpisodio(p: Projeto, id: string): Projeto {
 export function migrarSerie(p: Projeto): Projeto {
   if (p.meta.tipo !== 'serie' || (p.episodios && p.episodios.length)) return p;
   const ep: Episodio = {
-    id: novoId(), temporada: 1, numero: 1, titulo: 'Episódio 1', sinopse: '',
+    id: novoId(), temporada: 1, numero: 1, titulo: t('Episódio {n}', { n: 1 }), sinopse: '',
     guiao: p.guiao, storyboard: p.storyboard || {}, tecnico: p.tecnico || {}, levantamento: p.levantamento || {}
   };
   return { ...p, episodios: [ep], episodioAtivo: ep.id };

@@ -5,6 +5,7 @@ import type { Projeto } from '../types';
 import { dividirEmCenas, sinopse, reordenarCenas, atosPadrao, atosDasCenas } from '../editor/cenas';
 import { extrairLocal, formatarSegundos, Layout } from '../editor/layout';
 import { IFechar } from '../components/Icones';
+import { t, tp } from '../i18n';
 
 interface Props {
   view: EditorView;
@@ -73,7 +74,7 @@ export default function VistaQuadro({ view, estado, layout, projeto, onProjeto, 
     }
     const locais = new Map<string, string[]>();
     layout.cenas.forEach((c) => {
-      const l = extrairLocal(c.texto) || 'Sem local';
+      const l = extrairLocal(c.texto) || t('Sem local');
       locais.set(l, [...(locais.get(l) || []), c.id]);
     });
     return [...locais.entries()].map(([nome, l]) => ({ nome: titulo(nome), ids: l }));
@@ -88,7 +89,7 @@ export default function VistaQuadro({ view, estado, layout, projeto, onProjeto, 
     novos[a] = nome.trim() || atos[a];
     guardarAtos(novos, atribuicaoAtual());
   };
-  const adicionarAto = () => guardarAtos([...atos, `Ato ${numeroRomano(atos.length + 1)}`], atribuicaoAtual());
+  const adicionarAto = () => guardarAtos([...atos, t('Ato {n}', { n: numeroRomano(atos.length + 1) })], atribuicaoAtual());
   const removerAto = (a: number) => {
     const atual = atribuicaoAtual();
     const nova: Record<string, number> = {};
@@ -126,18 +127,18 @@ export default function VistaQuadro({ view, estado, layout, projeto, onProjeto, 
   return (
     <main className="vista">
       <div className="vista-cab">
-        <h1>Quadro de cenas</h1>
-        <span className="vista-sub">{modo === 'ato' ? 'Arrasta um cartão para reordenar. O guião acompanha (Ctrl+Z desfaz).' : 'Vista de consulta. Para reordenar, usa a vista por ato.'}</span>
+        <h1>{t('Quadro de cenas')}</h1>
+        <span className="vista-sub">{modo === 'ato' ? t('Arrasta um cartão para reordenar. O guião acompanha (Ctrl+Z desfaz).') : t('Vista de consulta. Para reordenar, usa a vista por ato.')}</span>
         <span className="flex1" />
-        <div className="segmentos" role="group" aria-label="Agrupar">
-          <button className={modo === 'ato' ? 'ativo' : ''} onClick={() => setModo('ato')}>Por ato</button>
-          <button className={modo === 'personagem' ? 'ativo' : ''} onClick={() => setModo('personagem')}>Por personagem</button>
-          <button className={modo === 'local' ? 'ativo' : ''} onClick={() => setModo('local')}>Por local</button>
+        <div className="segmentos" role="group" aria-label={t('Agrupar')}>
+          <button className={modo === 'ato' ? 'ativo' : ''} onClick={() => setModo('ato')}>{t('Por ato')}</button>
+          <button className={modo === 'personagem' ? 'ativo' : ''} onClick={() => setModo('personagem')}>{t('Por personagem')}</button>
+          <button className={modo === 'local' ? 'ativo' : ''} onClick={() => setModo('local')}>{t('Por local')}</button>
         </div>
       </div>
 
       {blocos.length === 0 ? (
-        <div className="vista-vazia">Ainda não há cenas. Escreve um cabeçalho (INT. ou EXT.) no guião e as cenas aparecem aqui.</div>
+        <div className="vista-vazia">{t('Ainda não há cenas. Escreve um cabeçalho (INT. ou EXT.) no guião e as cenas aparecem aqui.')}</div>
       ) : (
         <div className="colunas" ref={colunasRef} onDragEnd={() => { setArrasto(null); setAlvo(null); }}>
           {colunas.map((c, col) => {
@@ -148,13 +149,13 @@ export default function VistaQuadro({ view, estado, layout, projeto, onProjeto, 
                 onDrop={(e) => { e.preventDefault(); largar(); }}>
                 <div className="coluna-cab">
                   {modo === 'ato' ? (
-                    <input className="nome-ato" defaultValue={c.nome} key={c.nome} aria-label="Nome do ato"
+                    <input className="nome-ato" defaultValue={c.nome} key={c.nome} aria-label={t('Nome do ato')}
                       onBlur={(e) => { if (e.target.value !== c.nome) renomear(col, e.target.value); }}
                       onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }} />
                   ) : <span className="nome-ato">{c.nome}</span>}
-                  <span className="coluna-resumo">{c.ids.length} cena{c.ids.length === 1 ? '' : 's'} · {formatarSegundos(segundos)}</span>
+                  <span className="coluna-resumo">{tp(c.ids.length, '{n} cena', '{n} cenas')} · {formatarSegundos(segundos)}</span>
                   {modo === 'ato' && c.ids.length === 0 && atos.length > 1 && (
-                    <button className="btn-icone" aria-label={`Remover ${c.nome}`} title="Remover este ato vazio" onClick={() => removerAto(col)}><IFechar /></button>
+                    <button className="btn-icone" aria-label={t('Remover {nome}', { nome: c.nome })} title={t('Remover este ato vazio')} onClick={() => removerAto(col)}><IFechar /></button>
                   )}
                 </div>
                 <div className="coluna-lista">
@@ -174,17 +175,17 @@ export default function VistaQuadro({ view, estado, layout, projeto, onProjeto, 
                           onDrop={(e) => { e.preventDefault(); e.stopPropagation(); largar(); }}>
                           {projeto.meta.tipo !== 'teatro' && <div className="cartao-sb">
                             {quadros[0] ? (
-                              <button className="sb-mini" onClick={() => onIrParaCena(ci.indice)} title="Abrir a cena no guião">
+                              <button className="sb-mini" onClick={() => onIrParaCena(ci.indice)} title={t('Abrir a cena no guião')}>
                                 <img src={quadros[0].src} alt="" />
-                                <span>{quadros.length} plano{quadros.length > 1 ? 's' : ''}</span>
+                                <span>{tp(quadros.length, '{n} plano', '{n} planos')}</span>
                               </button>
                             ) : (
-                              <button className="sb-vazio" onClick={() => onCarregarStoryboard(id)}>+ Storyboard</button>
+                              <button className="sb-vazio" onClick={() => onCarregarStoryboard(id)}>{t('+ Storyboard')}</button>
                             )}
                           </div>}
-                          <button className="cartao-texto" onClick={() => onIrParaCena(ci.indice)} title="Abrir a cena no guião">
-                            <span className="cartao-titulo"><b>{ci.numero}</b><span>{ci.texto || 'Cena sem cabeçalho'}</span></span>
-                            <span className="cartao-sinopse">{sinopse(b) || 'Sem ação escrita.'}</span>
+                          <button className="cartao-texto" onClick={() => onIrParaCena(ci.indice)} title={t('Abrir a cena no guião')}>
+                            <span className="cartao-titulo"><b>{ci.numero}</b><span>{ci.texto || t('Cena sem cabeçalho')}</span></span>
+                            <span className="cartao-sinopse">{sinopse(b) || t('Sem ação escrita.')}</span>
                             <span className="cartao-meta">{formatarSegundos(ci.segundos)}{ci.personagens.length ? ' · ' + ci.personagens.map(titulo).join(', ') : ''}</span>
                           </button>
                         </article>
@@ -192,12 +193,12 @@ export default function VistaQuadro({ view, estado, layout, projeto, onProjeto, 
                     );
                   })}
                   {modo === 'ato' && alvo?.col === col && alvo.antes === null && <div className="indicador" />}
-                  {c.ids.length === 0 && <div className="coluna-vazia">Larga aqui uma cena.</div>}
+                  {c.ids.length === 0 && <div className="coluna-vazia">{t('Larga aqui uma cena.')}</div>}
                 </div>
               </section>
             );
           })}
-          {modo === 'ato' && <button className="btn btn-tracejado coluna-nova" onClick={adicionarAto}>+ Ato</button>}
+          {modo === 'ato' && <button className="btn btn-tracejado coluna-nova" onClick={adicionarAto}>{t('+ Ato')}</button>}
         </div>
       )}
     </main>

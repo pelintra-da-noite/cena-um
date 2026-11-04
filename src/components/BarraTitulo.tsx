@@ -1,5 +1,6 @@
 import React from 'react';
 import { Claquete } from './Icones';
+import { t, tp, locale } from '../i18n';
 
 interface Props {
   ficheiro: string | null;
@@ -18,7 +19,7 @@ const IGuardar = () => (
 );
 
 export default function BarraTitulo({ ficheiro, porGuardar, guardadoAs, autoGuardar, onGuardar, onGuardarComo, episodio }: Props) {
-  const hora = guardadoAs ? new Date(guardadoAs).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }) : '';
+  const hora = guardadoAs ? new Date(guardadoAs).toLocaleTimeString(locale(), { hour: '2-digit', minute: '2-digit' }) : '';
   return (
     <header className="titulo-barra">
       <Claquete />
@@ -29,13 +30,13 @@ export default function BarraTitulo({ ficheiro, porGuardar, guardadoAs, autoGuar
           <span className="ficheiro">{ficheiro}</span>
           {episodio && <><span className="sep">/</span><span className="ficheiro" style={{ color: 'var(--ambar)' }}>{episodio}</span></>}
           <span className={'estado' + (porGuardar ? ' pendente' : '')}
-            title={autoGuardar ? `Gravação automática a cada ${autoGuardar} min` : 'Gravação automática desligada ou guião ainda sem ficheiro (fica uma cópia de segurança)'}>
-            · {porGuardar ? 'Por guardar' : hora ? `Guardado às ${hora}` : 'Guardado'}
+            title={autoGuardar ? t('Gravação automática a cada {n} min', { n: autoGuardar }) : t('Gravação automática desligada ou guião ainda sem ficheiro (fica uma cópia de segurança)')}>
+            · {porGuardar ? t('Por guardar') : hora ? t('Guardado às {hora}', { hora }) : t('Guardado')}
           </span>
           {onGuardar && (
             <div className="acoes-ficheiro">
-              <button className="btn-titulo" onClick={onGuardar} title="Guardar (Ctrl+S)"><IGuardar />Guardar</button>
-              <button className="btn-titulo" onClick={onGuardarComo} title="Guardar como (Ctrl+Shift+S)">Guardar como…</button>
+              <button className="btn-titulo" onClick={onGuardar} title={t('Guardar') + ' (Ctrl+S)'}><IGuardar />{t('Guardar')}</button>
+              <button className="btn-titulo" onClick={onGuardarComo} title={t('Guardar como') + ' (Ctrl+Shift+S)'}>{t('Guardar como…')}</button>
             </div>
           )}
         </>

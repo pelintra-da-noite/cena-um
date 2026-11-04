@@ -6,6 +6,7 @@ import { baseKeymap, toggleMark } from 'prosemirror-commands';
 import { schema, Elemento, DEPOIS_DE_ENTER, CICLO_TAB, novoId, ELEMENTOS } from './schema';
 import { calcularLayout, Layout, nomePersonagem, extrairLocal, emTeatro } from './layout';
 import type { Papel } from '../types';
+import { t, emIngles } from '../i18n';
 
 type Cmd = (state: EditorState, dispatch?: (tr: Transaction) => void) => boolean;
 
@@ -51,7 +52,10 @@ const cicloTab = (reverso: boolean): Cmd => (state, dispatch) => {
 // ---------------------------------------------------------------------------
 // Autocompletar personagens e locais
 // ---------------------------------------------------------------------------
-const MOMENTOS = ['DIA', 'NOITE', 'MANHÃ', 'TARDE', 'FIM DE TARDE', 'MADRUGADA', 'CONTÍNUO', 'MAIS TARDE', 'MOMENTOS DEPOIS'];
+// O guião pode estar em português ou em inglês, seja qual for a língua da interface: sugere as duas, a da interface primeiro
+const MOMENTOS_PT = ['DIA', 'NOITE', 'MANHÃ', 'TARDE', 'FIM DE TARDE', 'MADRUGADA', 'CONTÍNUO', 'MAIS TARDE', 'MOMENTOS DEPOIS'];
+const MOMENTOS_EN = ['DAY', 'NIGHT', 'MORNING', 'AFTERNOON', 'EVENING', 'DAWN', 'DUSK', 'CONTINUOUS', 'LATER', 'MOMENTS LATER'];
+const ambas = (pt: string[], en: string[]) => (emIngles() ? [...en, ...pt] : [...pt, ...en]);
 
 export interface Sugestao { resto: string; pos: number; }
 
@@ -71,11 +75,11 @@ export function calcularSugestao(state: EditorState, layout: Layout | null, extr
     return cand ? { resto: cand.slice(t.length), pos: $from.pos } : null;
   }
   if (el === 'cena' && emTeatro()) {
-    const p = ['ATO ', 'CENA ', 'PRÓLOGO', 'EPÍLOGO'].find((x) => x.startsWith(t) && x !== t);
+    const p = ambas(['ATO ', 'CENA ', 'PRÓLOGO', 'EPÍLOGO'], ['ACT ', 'SCENE ', 'PROLOGUE', 'EPILOGUE']).find((x) => x.startsWith(t) && x !== t);
     return p ? { resto: p.slice(t.length), pos: $from.pos } : null;
   }
   if (el === 'transicao' && emTeatro()) {
-    const p = ['BLACKOUT.', 'PANO.', 'LUZ APAGA.', 'FIM.', 'INTERVALO.'].find((x) => x.startsWith(t) && x !== t);
+    const p = ambas(['BLACKOUT.', 'PANO.', 'LUZ APAGA.', 'FIM.', 'INTERVALO.'], ['BLACKOUT.', 'CURTAIN.', 'LIGHTS DOWN.', 'END OF PLAY.', 'INTERMISSION.']).find((x) => x.startsWith(t) && x !== t);
     return p ? { resto: p.slice(t.length), pos: $from.pos } : null;
   }
   if (el === 'cena') {
@@ -90,7 +94,7 @@ export function calcularSugestao(state: EditorState, layout: Layout | null, extr
     if (partes.length >= 2 || /\s[—–-]\s?$/.test(corpo)) {
       const momento = corpo.replace(/^.*[—–-]\s?/, '');
       const espaco = /[—–-]$/.test(corpo) ? ' ' : '';
-      const cand = MOMENTOS.find((x) => x.startsWith(momento) && x !== momento);
+      const cand = ambas(MOMENTOS_PT, MOMENTOS_EN).find((x) => x.startsWith(momento) && x !== momento);
       return cand ? { resto: espaco + cand.slice(momento.length), pos: $from.pos } : null;
     }
     if (!corpo) return null;
@@ -229,7 +233,7 @@ const automatismos = new Plugin({
       if (el === 'acao' && /^(INT\.?\/EXT\.|EXT\.?\/INT\.|I\/E\.|INT\.|EXT\.) $/i.test(txt)) {
         tr = tr || state.tr;
         tr.setNodeMarkup(pos, schema.nodes.cena, { ...node.attrs, id: node.attrs.id || novoId() });
-      } else if (el === 'acao' && /^[A-ZÀ-Ý ]{2,}(PARA|A NEGRO|OUT|IN):$/.test(txt)) {
+      } else if (el === 'acao' && /^[A-ZÀ-Ý ]{2,}(PARA|A NEGRO|OUT|IN|TO):$/.test(txt)) {
         tr = tr || state.tr;
         tr.setNodeMarkup(pos, schema.nodes.transicao, { ...node.attrs });
       } else if (el === 'dialogo' && txt === '(') {
@@ -310,7 +314,7 @@ function paginasPlugin(papelInicial: Papel) {
         });
         // dica no bloco vazio onde está o cursor
         const { node, inicio, el } = blocoAtual(state);
-        const dica = (emTeatro() && DICAS_TEATRO[el]) || DICAS[el];
+        const dica = t((emTeatro() && DICAS_TEATRO[el]) || DICAS[el]);
         if (node && node.textContent === '' && dica) {
           decos.push(Decoration.node(inicio, inicio + node.nodeSize, { class: 'vazio', 'data-dica': dica }));
         }

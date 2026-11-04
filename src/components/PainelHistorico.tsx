@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import type { Node as PMNode } from 'prosemirror-model';
 import type { Momento } from '../editor/historico';
 import { IFechar } from './Icones';
+import { t, tp, locale } from '../i18n';
 
 interface Props {
   momentos: Momento[];
@@ -10,7 +11,7 @@ interface Props {
   onFechar: () => void;
 }
 
-const hora = (ms: number) => new Date(ms).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+const hora = (ms: number) => new Date(ms).toLocaleTimeString(locale(), { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
 export default function PainelHistorico({ momentos, docAtual, onVoltar, onFechar }: Props) {
   const caixa = useRef<HTMLDivElement>(null);
@@ -28,13 +29,13 @@ export default function PainelHistorico({ momentos, docAtual, onVoltar, onFechar
   const lista = [...momentos].reverse();
   const idxAtual = lista.findIndex((m) => m.doc.eq(docAtual));
   return (
-    <div ref={caixa} className="painel-historico" role="dialog" aria-label="Histórico de alterações">
+    <div ref={caixa} className="painel-historico" role="dialog" aria-label={t('Histórico de alterações')}>
       <div className="ph-cab">
         <div>
-          <b>Histórico</b>
-          <div className="ph-sub">Desde que abriste o guião. Voltar a um momento também fica no histórico, por isso podes sempre regressar.</div>
+          <b>{t('Histórico')}</b>
+          <div className="ph-sub">{t('Desde que abriste o guião. Voltar a um momento também fica no histórico, por isso podes sempre regressar.')}</div>
         </div>
-        <button className="btn-icone" aria-label="Fechar histórico" onClick={onFechar}><IFechar /></button>
+        <button className="btn-icone" aria-label={t('Fechar histórico')} onClick={onFechar}><IFechar /></button>
       </div>
       <ol className="ph-lista">
         {lista.map((m, i) => {
@@ -46,9 +47,9 @@ export default function PainelHistorico({ momentos, docAtual, onVoltar, onFechar
               <span className="ph-hora">{hora(m.hora)}</span>
               <span className="ph-texto">
                 <span>{m.rotulo}</span>
-                <small>{m.palavras} palavras{dif ? ` · ${dif > 0 ? '+' : '−'}${Math.abs(dif)}` : ''}</small>
+                <small>{tp(m.palavras, '{n} palavra', '{n} palavras')}{dif ? ` · ${dif > 0 ? '+' : '−'}${Math.abs(dif)}` : ''}</small>
               </span>
-              {atual ? <span className="ph-agora">Agora</span> : <button className="btn" onClick={() => onVoltar(m)}>Voltar</button>}
+              {atual ? <span className="ph-agora">{t('Agora')}</span> : <button className="btn" onClick={() => onVoltar(m)}>{t('Voltar')}</button>}
             </li>
           );
         })}

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { Papel } from '../types';
 import { IFechar } from '../components/Icones';
+import { t, tp } from '../i18n';
 
 export interface OpcoesExportar {
   formato: 'pdf' | 'fdx' | 'fountain' | 'tecnico-pdf' | 'csv' | 'lev-pdf' | 'lev-csv';
@@ -23,17 +24,17 @@ interface Props {
 }
 
 const FORMATOS: { id: OpcoesExportar['formato']; nome: string; desc: string }[] = [
-  { id: 'pdf', nome: 'PDF', desc: 'Para ler, imprimir ou enviar a concursos.' },
-  { id: 'fdx', nome: 'Final Draft (.fdx)', desc: 'Para quem trabalha no Final Draft.' },
-  { id: 'fountain', nome: 'Fountain (.fountain)', desc: 'Texto simples, abre em quase todos os programas.' }
+  { id: 'pdf', get nome() { return t('PDF'); }, get desc() { return t('Para ler, imprimir ou enviar a concursos.'); } },
+  { id: 'fdx', get nome() { return t('Final Draft (.fdx)'); }, get desc() { return t('Para quem trabalha no Final Draft.'); } },
+  { id: 'fountain', get nome() { return t('Fountain (.fountain)'); }, get desc() { return t('Texto simples, abre em quase todos os programas.'); } }
 ];
 const FORMATOS_TECNICO: typeof FORMATOS = [
-  { id: 'tecnico-pdf', nome: 'Guião técnico em PDF', desc: 'Tabela de planos com storyboard, em A4 horizontal.' },
-  { id: 'csv', nome: 'Guião técnico em folha de cálculo (.csv)', desc: 'Abre no Excel, Numbers ou Google Sheets.' }
+  { id: 'tecnico-pdf', get nome() { return t('Guião técnico em PDF'); }, get desc() { return t('Tabela de planos com storyboard, em A4 horizontal.'); } },
+  { id: 'csv', get nome() { return t('Guião técnico em folha de cálculo (.csv)'); }, get desc() { return t('Abre no Excel, Numbers ou Google Sheets.'); } }
 ];
 const FORMATOS_LEV: typeof FORMATOS = [
-  { id: 'lev-pdf', nome: 'Levantamento em PDF', desc: 'Folha por cena com personagens e elementos, mais o resumo por local.' },
-  { id: 'lev-csv', nome: 'Levantamento em folha de cálculo (.csv)', desc: 'Uma linha por cena, para planear a rodagem.' }
+  { id: 'lev-pdf', get nome() { return t('Levantamento em PDF'); }, get desc() { return t('Folha por cena com personagens e elementos, mais o resumo por local.'); } },
+  { id: 'lev-csv', get nome() { return t('Levantamento em folha de cálculo (.csv)'); }, get desc() { return t('Uma linha por cena, para planear a rodagem.'); } }
 ];
 
 export default function DialogoExportar({ temCartaz, cartazPorDefeito, papel, onExportar, onFechar, inicial, episodios, episodioAtivo, teatro }: Props) {
@@ -56,21 +57,21 @@ export default function DialogoExportar({ temCartaz, cartazPorDefeito, papel, on
     <div className="veu" onMouseDown={(e) => { if (e.target === e.currentTarget && !ocupado) onFechar(); }}>
       <div className="dialogo" role="dialog" aria-labelledby="exp-t" style={{ width: 520 }}>
         <div className="dialogo-cab">
-          <h2 id="exp-t">Exportar</h2>
+          <h2 id="exp-t">{t('Exportar')}</h2>
           <span className="flex1" />
-          <button className="btn-icone" aria-label="Fechar" onClick={onFechar}><IFechar /></button>
+          <button className="btn-icone" aria-label={t('Fechar')} onClick={onFechar}><IFechar /></button>
         </div>
         <div className="dialogo-corpo" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {episodios && (
             <div className="exp-episodios">
-              <div className="sobretitulo">Episódios</div>
-              <div className="segmentos" role="radiogroup" aria-label="Episódios a exportar" style={{ alignSelf: 'flex-start' }}>
-                <button role="radio" aria-checked={alcance === 'atual'} className={alcance === 'atual' ? 'ativo' : ''} onClick={() => setAlcance('atual')}>Episódio aberto</button>
-                <button role="radio" aria-checked={alcance === 'todos'} className={alcance === 'todos' ? 'ativo' : ''} onClick={() => setAlcance('todos')}>Todos ({episodios.length})</button>
-                <button role="radio" aria-checked={alcance === 'escolher'} className={alcance === 'escolher' ? 'ativo' : ''} onClick={() => setAlcance('escolher')}>Escolher…</button>
+              <div className="sobretitulo">{t('Episódios')}</div>
+              <div className="segmentos" role="radiogroup" aria-label={t('Episódios a exportar')} style={{ alignSelf: 'flex-start' }}>
+                <button role="radio" aria-checked={alcance === 'atual'} className={alcance === 'atual' ? 'ativo' : ''} onClick={() => setAlcance('atual')}>{t('Episódio aberto')}</button>
+                <button role="radio" aria-checked={alcance === 'todos'} className={alcance === 'todos' ? 'ativo' : ''} onClick={() => setAlcance('todos')}>{t('Todos ({n})', { n: episodios.length })}</button>
+                <button role="radio" aria-checked={alcance === 'escolher'} className={alcance === 'escolher' ? 'ativo' : ''} onClick={() => setAlcance('escolher')}>{t('Escolher…')}</button>
               </div>
               {alcance === 'atual' && <span className="vista-sub">{rotuloAtivo}</span>}
-              {alcance === 'todos' && <span className="vista-sub">Em PDF, ficam todos num só ficheiro, cada um com a sua folha de rosto. Em Final Draft ou Fountain, sai um ficheiro por episódio.</span>}
+              {alcance === 'todos' && <span className="vista-sub">{t('Em PDF, ficam todos num só ficheiro, cada um com a sua folha de rosto. Em Final Draft ou Fountain, sai um ficheiro por episódio.')}</span>}
               {alcance === 'escolher' && (
                 <div className="lista-ep-exp">
                   {episodios.map((e) => (
@@ -84,21 +85,21 @@ export default function DialogoExportar({ temCartaz, cartazPorDefeito, papel, on
               )}
             </div>
           )}
-          <div className="sobretitulo">Guião</div>
+          <div className="sobretitulo">{t('Guião')}</div>
           {FORMATOS.map((f) => (
             <button key={f.id} className={'tipo' + (o.formato === f.id ? ' ativo' : '')} style={{ height: 58 }}
               role="radio" aria-checked={o.formato === f.id} onClick={() => setO({ ...o, formato: f.id })}>
               <b>{f.nome}</b><small>{f.desc}</small>
             </button>
           ))}
-          {!teatro && <div className="sobretitulo" style={{ marginTop: 8 }}>Guião técnico</div>}
+          {!teatro && <div className="sobretitulo" style={{ marginTop: 8 }}>{t('Guião técnico')}</div>}
           {!teatro && FORMATOS_TECNICO.map((f) => (
             <button key={f.id} className={'tipo' + (o.formato === f.id ? ' ativo' : '')} style={{ height: 58 }}
               role="radio" aria-checked={o.formato === f.id} onClick={() => setO({ ...o, formato: f.id })}>
               <b>{f.nome}</b><small>{f.desc}</small>
             </button>
           ))}
-          <div className="sobretitulo" style={{ marginTop: 8 }}>Levantamento</div>
+          <div className="sobretitulo" style={{ marginTop: 8 }}>{t('Levantamento')}</div>
           {FORMATOS_LEV.map((f) => (
             <button key={f.id} className={'tipo' + (o.formato === f.id ? ' ativo' : '')} style={{ height: 58 }}
               role="radio" aria-checked={o.formato === f.id} onClick={() => setO({ ...o, formato: f.id })}>
@@ -107,19 +108,19 @@ export default function DialogoExportar({ temCartaz, cartazPorDefeito, papel, on
           ))}
           {o.formato === 'pdf' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 8, padding: 14, borderRadius: 10, background: 'var(--superficie)' }}>
-              {caixa('rosto', 'Folha de rosto com título e autoria')}
-              {caixa('cartaz', temCartaz ? 'Incluir o cartaz na folha de rosto' : 'Incluir o cartaz (este projeto não tem cartaz)', !temCartaz || !o.rosto)}
-              {caixa('numeros', 'Números de cena nas margens')}
-              <span style={{ fontSize: 12, color: 'var(--texto-3)' }}>Papel {papel === 'a4' ? 'A4' : 'Carta'}, sempre branco, Courier 12 pt.</span>
+              {caixa('rosto', t('Folha de rosto com título e autoria'))}
+              {caixa('cartaz', temCartaz ? t('Incluir o cartaz na folha de rosto') : t('Incluir o cartaz (este projeto não tem cartaz)'), !temCartaz || !o.rosto)}
+              {caixa('numeros', t('Números de cena nas margens'))}
+              <span style={{ fontSize: 12, color: 'var(--texto-3)' }}>{t('Papel {papel}, sempre branco, Courier 12 pt.', { papel: papel === 'a4' ? 'A4' : t('Carta') })}</span>
             </div>
           )}
         </div>
         <div className="dialogo-rodape">
-          <button className="btn" onClick={onFechar}>Cancelar</button>
+          <button className="btn" onClick={onFechar}>{t('Cancelar')}</button>
           <button className="btn btn-ambar"
             disabled={ocupado || (!!episodios && !idsAExportar?.length)}
             onClick={async () => { setOcupado(true); try { await onExportar({ ...o, episodios: idsAExportar }); } finally { setOcupado(false); } }}>
-            {ocupado ? 'A exportar…' : varios ? `Exportar ${idsAExportar!.length} episódios` : 'Exportar'}
+            {ocupado ? t('A exportar…') : varios ? t('Exportar {n} episódios', { n: idsAExportar!.length }) : t('Exportar')}
           </button>
         </div>
       </div>

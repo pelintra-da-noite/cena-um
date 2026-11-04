@@ -5,6 +5,7 @@ import { FONTES, TAMANHOS, CORES, Alinhamento } from '../editor/schema';
 import { CATEGORIAS } from '../editor/levantamento';
 import type { CategoriaLevantamento } from '../types';
 import { lerFormatacao, alternarMarca, definirValor, definirAlinhamento, limparFormatacao } from '../editor/formatacao';
+import { t, tp } from '../i18n';
 
 interface Props {
   view: EditorView;
@@ -65,47 +66,47 @@ export default function MenuFormatacao({ view, dados, papelEscuro, onFechar, onJ
   const fechar = (acao: () => void) => () => { acao(); onFechar(); };
 
   return (
-    <div ref={caixa} className="menu-form" role="menu" aria-label="Formatação" style={{ left: pos.left, top: pos.top }} onMouseDown={(e) => { if ((e.target as HTMLElement).tagName !== 'SELECT' && (e.target as HTMLElement).tagName !== 'INPUT') e.preventDefault(); }}>
+    <div ref={caixa} className="menu-form" role="menu" aria-label={t('Formatação')} style={{ left: pos.left, top: pos.top }} onMouseDown={(e) => { if ((e.target as HTMLElement).tagName !== 'SELECT' && (e.target as HTMLElement).tagName !== 'INPUT') e.preventDefault(); }}>
       {dados.palavra && (
         <div className="mf-secao mf-orto">
-          <div className="mf-rotulo">Corretor</div>
-          {dados.sugestoes.length === 0 && <div className="mf-vazio">Sem sugestões para «{dados.palavra}»</div>}
+          <div className="mf-rotulo">{t('Corretor')}</div>
+          {dados.sugestoes.length === 0 && <div className="mf-vazio">{t('Sem sugestões para «{p}»', { p: dados.palavra })}</div>}
           {dados.sugestoes.map((s) => (
             <button key={s} className="mf-sugestao" onMouseDown={sem} onClick={fechar(() => window.cena.substituirPalavra(s))}>{s}</button>
           ))}
-          <button className="mf-linha" onMouseDown={sem} onClick={fechar(() => window.cena.adicionarPalavra(dados.palavra))}>Adicionar «{dados.palavra}» ao dicionário</button>
+          <button className="mf-linha" onMouseDown={sem} onClick={fechar(() => window.cena.adicionarPalavra(dados.palavra))}>{t('Adicionar «{p}» ao dicionário', { p: dados.palavra })}</button>
         </div>
       )}
 
       <div className="mf-barra">
-        <button className={'mf-ic' + (f.negrito ? ' ativo' : '')} aria-pressed={f.negrito} title="Negrito (Ctrl+B)" onMouseDown={sem} onClick={() => { alternarMarca(view, 'negrito'); depois(); }}><b>B</b></button>
-        <button className={'mf-ic' + (f.italico ? ' ativo' : '')} aria-pressed={f.italico} title="Itálico (Ctrl+I)" onMouseDown={sem} onClick={() => { alternarMarca(view, 'italico'); depois(); }}><i style={{ fontFamily: 'Georgia, serif' }}>I</i></button>
-        <button className={'mf-ic' + (f.sublinhado ? ' ativo' : '')} aria-pressed={f.sublinhado} title="Sublinhado (Ctrl+U)" onMouseDown={sem} onClick={() => { alternarMarca(view, 'sublinhado'); depois(); }}><u>U</u></button>
-        <button className={'mf-ic' + (f.riscado ? ' ativo' : '')} aria-pressed={f.riscado} title="Riscado" onMouseDown={sem} onClick={() => { alternarMarca(view, 'riscado'); depois(); }}><s>S</s></button>
+        <button className={'mf-ic' + (f.negrito ? ' ativo' : '')} aria-pressed={f.negrito} title={t('Negrito (Ctrl+B)')} onMouseDown={sem} onClick={() => { alternarMarca(view, 'negrito'); depois(); }}><b>B</b></button>
+        <button className={'mf-ic' + (f.italico ? ' ativo' : '')} aria-pressed={f.italico} title={t('Itálico (Ctrl+I)')} onMouseDown={sem} onClick={() => { alternarMarca(view, 'italico'); depois(); }}><i style={{ fontFamily: 'Georgia, serif' }}>I</i></button>
+        <button className={'mf-ic' + (f.sublinhado ? ' ativo' : '')} aria-pressed={f.sublinhado} title={t('Sublinhado (Ctrl+U)')} onMouseDown={sem} onClick={() => { alternarMarca(view, 'sublinhado'); depois(); }}><u>U</u></button>
+        <button className={'mf-ic' + (f.riscado ? ' ativo' : '')} aria-pressed={f.riscado} title={t('Riscado')} onMouseDown={sem} onClick={() => { alternarMarca(view, 'riscado'); depois(); }}><s>S</s></button>
         <span className="mf-sep" />
         {(['left', 'center', 'right', 'justify'] as const).map((a) => (
           <button key={a} className={'mf-ic' + (f.alinhamento === a ? ' ativo' : '')} aria-pressed={f.alinhamento === a}
-            title={{ left: 'Alinhar à esquerda', center: 'Centrar', right: 'Alinhar à direita', justify: 'Justificar' }[a]}
+            title={t({ left: 'Alinhar à esquerda', center: 'Centrar', right: 'Alinhar à direita', justify: 'Justificar' }[a])}
             onMouseDown={sem} onClick={() => { definirAlinhamento(view, f.alinhamento === a ? null : a); depois(); }}>
             <IconeAlinhar tipo={a} />
           </button>
         ))}
         <span className="mf-sep" />
-        <button className="mf-ic" title="Limpar formatação" aria-label="Limpar formatação" onMouseDown={sem} onClick={() => { limparFormatacao(view); depois(); }}>
+        <button className="mf-ic" title={t('Limpar formatação')} aria-label={t('Limpar formatação')} onMouseDown={sem} onClick={() => { limparFormatacao(view); depois(); }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M5 5h12M11 5l-3 14M4 20L20 4" /></svg>
         </button>
       </div>
 
       <div className="mf-secao">
-        <label className="mf-rotulo" htmlFor="mf-fonte">Tipo de letra</label>
+        <label className="mf-rotulo" htmlFor="mf-fonte">{t('Tipo de letra')}</label>
         <select id="mf-fonte" className="mf-select" value={f.fonte}
           onChange={(e) => { definirValor(view, 'fonte', e.target.value); depois(); }}>
-          {FONTES.map((x) => <option key={x.nome} value={x.css} style={{ fontFamily: x.css || "'Courier Prime', monospace" }}>{x.nome}</option>)}
+          {FONTES.map((x) => <option key={x.nome} value={x.css} style={{ fontFamily: x.css || "'Courier Prime', monospace" }}>{t(x.nome)}</option>)}
         </select>
       </div>
 
       <div className="mf-secao">
-        <div className="mf-rotulo">Tamanho</div>
+        <div className="mf-rotulo">{t('Tamanho')}</div>
         <div className="mf-tamanhos">
           {TAMANHOS.map((t) => (
             <button key={t} className={'mf-chip' + (f.tamanho === t ? ' ativo' : '')} aria-pressed={f.tamanho === t}
@@ -115,17 +116,17 @@ export default function MenuFormatacao({ view, dados, papelEscuro, onFechar, onJ
       </div>
 
       <div className="mf-secao">
-        <div className="mf-rotulo">Cor</div>
+        <div className="mf-rotulo">{t('Cor')}</div>
         <div className="mf-cores">
-          <button className={'mf-cor auto' + (!f.cor ? ' ativo' : '')} title="Automática" aria-label="Cor automática"
+          <button className={'mf-cor auto' + (!f.cor ? ' ativo' : '')} title={t('Automática')} aria-label={t('Cor automática')}
             style={{ background: corAuto }} onMouseDown={sem} onClick={() => { definirValor(view, 'cor', null); depois(); }} />
           {CORES.map((c) => (
-            <button key={c} className={'mf-cor' + (f.cor === c ? ' ativo' : '')} aria-label={`Cor ${c}`} style={{ background: c }}
+            <button key={c} className={'mf-cor' + (f.cor === c ? ' ativo' : '')} aria-label={`${t('Cor')} ${c}`} style={{ background: c }}
               onMouseDown={sem} onClick={() => { definirValor(view, 'cor', c); depois(); }} />
           ))}
-          <label className="mf-cor mais" title="Outra cor">
+          <label className="mf-cor mais" title={t('Outra cor')}>
             +
-            <input type="color" aria-label="Escolher outra cor" value={f.cor || '#E6A84A'}
+            <input type="color" aria-label={t('Escolher outra cor')} value={f.cor || '#E6A84A'}
               onChange={(e) => { definirValor(view, 'cor', e.target.value); depois(); }} />
           </label>
         </div>
@@ -137,7 +138,7 @@ export default function MenuFormatacao({ view, dados, papelEscuro, onFechar, onJ
         if (!texto || texto.length > 80) return null;
         return (
           <div className="mf-secao">
-            <div className="mf-rotulo">Juntar «{texto.length > 28 ? texto.slice(0, 27) + '…' : texto}» ao levantamento como</div>
+            <div className="mf-rotulo">{t('Juntar «{p}» ao levantamento como', { p: texto.length > 28 ? texto.slice(0, 27) + '…' : texto })}</div>
             <div className="mf-lev">
               {CATEGORIAS.filter((c) => c.id !== 'notas').map((c) => (
                 <button key={c.id} onMouseDown={sem} onClick={fechar(() => onJuntarLevantamento(c.id, texto))}>{c.nome}</button>
@@ -148,9 +149,9 @@ export default function MenuFormatacao({ view, dados, papelEscuro, onFechar, onJ
       })()}
 
       <div className="mf-rodape">
-        <button disabled={!dados.podeCortar} onMouseDown={sem} onClick={fechar(() => window.cena.editar('cortar'))}>Cortar</button>
-        <button disabled={!dados.podeCopiar} onMouseDown={sem} onClick={fechar(() => window.cena.editar('copiar'))}>Copiar</button>
-        <button disabled={!dados.podeColar} onMouseDown={sem} onClick={fechar(() => window.cena.editar('colar'))}>Colar</button>
+        <button disabled={!dados.podeCortar} onMouseDown={sem} onClick={fechar(() => window.cena.editar('cortar'))}>{t('Cortar')}</button>
+        <button disabled={!dados.podeCopiar} onMouseDown={sem} onClick={fechar(() => window.cena.editar('copiar'))}>{t('Copiar')}</button>
+        <button disabled={!dados.podeColar} onMouseDown={sem} onClick={fechar(() => window.cena.editar('colar'))}>{t('Colar')}</button>
       </div>
     </div>
   );

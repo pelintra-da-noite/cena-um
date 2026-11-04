@@ -3,18 +3,19 @@ import type { CategoriaLevantamento, Papel, PersonagemInfo, Projeto } from '../t
 import { dividirEmCenas } from './cenas';
 import { contarLinhas, extrairLocal, geometria, FORMATO, nomePersonagem, Layout } from './layout';
 import type { Elemento } from './schema';
+import { t } from '../i18n';
 
 export const CATEGORIAS: { id: CategoriaLevantamento; nome: string; exemplo: string }[] = [
-  { id: 'figurantes', nome: 'Figurantes', exemplo: 'ex.: 3 pescadores' },
-  { id: 'aderecos', nome: 'Adereços', exemplo: 'ex.: envelope, bengala' },
-  { id: 'guardaRoupa', nome: 'Guarda-roupa', exemplo: 'ex.: casaco molhado' },
-  { id: 'caracterizacao', nome: 'Caracterização', exemplo: 'ex.: ferida na mão' },
-  { id: 'cenografia', nome: 'Cenografia', exemplo: 'ex.: mesa posta para dois' },
-  { id: 'veiculos', nome: 'Veículos', exemplo: 'ex.: barco de pesca' },
-  { id: 'animais', nome: 'Animais', exemplo: 'ex.: gaivotas' },
-  { id: 'efeitos', nome: 'Efeitos', exemplo: 'ex.: chuva, fumo' },
-  { id: 'som', nome: 'Som e música', exemplo: 'ex.: rádio a tocar' },
-  { id: 'notas', nome: 'Notas de produção', exemplo: 'ex.: pedir licença ao porto' }
+  { id: 'figurantes', get nome() { return t('Figurantes'); }, get exemplo() { return t('ex.: 3 pescadores'); } },
+  { id: 'aderecos', get nome() { return t('Adereços'); }, get exemplo() { return t('ex.: envelope, bengala'); } },
+  { id: 'guardaRoupa', get nome() { return t('Guarda-roupa'); }, get exemplo() { return t('ex.: casaco molhado'); } },
+  { id: 'caracterizacao', get nome() { return t('Caracterização'); }, get exemplo() { return t('ex.: ferida na mão'); } },
+  { id: 'cenografia', get nome() { return t('Cenografia'); }, get exemplo() { return t('ex.: mesa posta para dois'); } },
+  { id: 'veiculos', get nome() { return t('Veículos'); }, get exemplo() { return t('ex.: barco de pesca'); } },
+  { id: 'animais', get nome() { return t('Animais'); }, get exemplo() { return t('ex.: gaivotas'); } },
+  { id: 'efeitos', get nome() { return t('Efeitos'); }, get exemplo() { return t('ex.: chuva, fumo'); } },
+  { id: 'som', get nome() { return t('Som e música'); }, get exemplo() { return t('ex.: rádio a tocar'); } },
+  { id: 'notas', get nome() { return t('Notas de produção'); }, get exemplo() { return t('ex.: pedir licença ao porto'); } }
 ];
 
 export interface CenaLevantamento {

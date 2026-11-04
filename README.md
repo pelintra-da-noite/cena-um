@@ -1,5 +1,7 @@
 # Cena Um
 
+*Screenwriting software for Windows, in Portuguese and English (Settings → Language).*
+
 Programa gratuito de escrita de guiões para cinema, televisão e teatro, feito em português de Portugal para Windows.
 
 ![Editor de guião](docs/editor.png)
@@ -36,6 +38,7 @@ O instalador ainda não tem assinatura digital. Na primeira vez, o Windows mostr
 - **Peças de teatro** no formato próprio do texto dramático: falas a toda a largura, nome da personagem centrado, didascálias recuadas e em itálico, cabeçalhos de ato/cena centrados e página de personagens no PDF. Sem storyboard nem guião técnico, que não fazem sentido em palco.
 - **Folha de rosto editável** nas definições do projeto: crédito, autoria (vários nomes), «baseado em», versão, data, contactos e direitos, com pré-visualização. Vai para o PDF, o Final Draft e o Fountain.
 - **Tema escuro ou claro** (Definições → Aparência).
+- **Português ou inglês**: a interface, os PDFs e as folhas de cálculo podem ficar em inglês (Definições → Língua). O português é o padrão. O corretor ortográfico escolhe-se à parte (português, inglês ou ambos), porque o guião pode estar numa língua diferente da do programa.
 - **Equipa**: ficha técnica por departamentos com funções já preenchidas (cinema/TV ou teatro), onde acrescentas funções e departamentos; nome, contacto, residência e notas por pessoa. Exporta PDF e folha de cálculo.
 - **Personagens em toda a série**: em que episódios cada personagem fala ou aparece, com total de falas e tempo de diálogo.
 - **Ficheiros**: guarda em `.cena`, gravação automática configurável (1, 5 ou 10 minutos, ou desligada; 5 por defeito) e cópia de segurança dos guiões ainda sem ficheiro, recuperada se o programa fechar de repente; exporta PDF, Final Draft (`.fdx`) e Fountain; importa `.fdx` e `.fountain`.

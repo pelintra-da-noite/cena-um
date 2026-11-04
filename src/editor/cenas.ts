@@ -4,6 +4,7 @@ import type { EditorView } from 'prosemirror-view';
 import type { MetaProjeto, Plano, TipoProjeto } from '../types';
 import { nomePersonagem } from './layout';
 import { novoId } from './schema';
+import { t as tx } from '../i18n';
 
 export interface BlocoCena {
   id: string;
@@ -44,7 +45,7 @@ export function reordenarCenas(view: EditorView, ordem: string[]) {
   for (const c of cenas) if (!usados.has(c.id)) nos.push(...c.nos); // nada se perde
   const tr = view.state.tr.replaceWith(0, view.state.doc.content.size, Fragment.from(nos));
   tr.setSelection(TextSelection.atStart(tr.doc));
-  tr.setMeta('rotulo', 'Reorganizaste as cenas no quadro');
+  tr.setMeta('rotulo', tx('Reorganizaste as cenas no quadro'));
   view.dispatch(tr);
 }
 
@@ -52,9 +53,10 @@ export function reordenarCenas(view: EditorView, ordem: string[]) {
 // Atos (colunas do quadro)
 // ---------------------------------------------------------------------------
 export function atosPadrao(tipo: TipoProjeto): string[] {
-  if (tipo === 'teatro') return ['Ato I', 'Ato II'];
-  if (tipo === 'serie') return ['Teaser', 'Ato I', 'Ato II', 'Ato III'];
-  return ['Ato I', 'Ato II', 'Ato III'];
+  const a = (n: string) => tx('Ato {n}', { n });
+  if (tipo === 'teatro') return [a('I'), a('II')];
+  if (tipo === 'serie') return ['Teaser', a('I'), a('II'), a('III')];
+  return [a('I'), a('II'), a('III')];
 }
 
 /** Ato de cada cena: a atribuída, ou a da cena anterior (as cenas novas seguem a vizinha) */
@@ -82,7 +84,7 @@ export function planosDaCena(b: BlocoCena, quadros: { id: string }[]): Plano[] {
     switch (n.type.name) {
       case 'acao': planos.push(novoPlano(t, '')); break;
       case 'personagem': personagem = nomePersonagem(t); break;
-      case 'dialogo': planos.push(novoPlano(`${capital(personagem)}: «${t}»`, 'Diálogo')); break;
+      case 'dialogo': planos.push(novoPlano(`${capital(personagem)}: «${t}»`, tx('Diálogo'))); break;
       default: break;
     }
   }

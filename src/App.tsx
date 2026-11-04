@@ -16,6 +16,7 @@ import DialogoDefinicoes from './screens/DialogoDefinicoes';
 import DialogoExportar, { OpcoesExportar } from './screens/DialogoExportar';
 import BarraTitulo from './components/BarraTitulo';
 import Confirmar, { PedidoConfirmacao } from './components/Confirmar';
+import { t, locale, definirIdioma } from './i18n';
 
 const DEF_PADRAO: Definicoes = { papelEscuro: false, papel: 'a4', numerosCena: true, zoom: 1.0, autoGuardar: 5 };
 
@@ -53,7 +54,10 @@ export default function App() {
   const atualizarRecentes = useCallback(() => { window.cena.recentes().then(setRecentes); }, []);
   useEffect(atualizarRecentes, [atualizarRecentes]);
 
+  // A língua tem de estar definida antes de qualquer componente se desenhar
+  definirIdioma(definicoes.idioma || 'pt');
   useEffect(() => { localStorage.setItem('cena-um:definicoes', JSON.stringify(definicoes)); }, [definicoes]);
+  useEffect(() => { window.cena.preferencias({ idioma: definicoes.idioma || 'pt', corretor: definicoes.corretor || 'pt' }); }, [definicoes.idioma, definicoes.corretor]);
   useEffect(() => {
     const t = definicoes.tema || 'escuro';
     document.documentElement.dataset.tema = t;
@@ -132,7 +136,7 @@ export default function App() {
     try {
       if (ext === 'cena') {
         const p = JSON.parse(conteudo) as Projeto;
-        if (p.formato !== 'cena') throw new Error('Este ficheiro não é um projeto do Cena Um.');
+        if (p.formato !== 'cena') throw new Error(t('Este ficheiro não é um projeto do Cena Um.'));
         validarDoc(p.guiao);
         p.storyboard = p.storyboard || {};
         p.meta.guiaFeito = p.meta.guiaFeito || [];
@@ -143,27 +147,27 @@ export default function App() {
         const { doc, titulo } = deFdx(conteudo);
         validarDoc(doc);
         carregar({ formato: 'cena', versao: 1, meta: metaVazia(titulo || nomeBase(cam)), guiao: doc, storyboard: {} }, null, true);
-        avisar('Guião do Final Draft importado. Guarda-o como .cena para manter o storyboard.');
+        avisar(t('Guião do Final Draft importado. Guarda-o como .cena para manter o storyboard.'));
         return;
       }
       const { doc, titulo, autor } = deFountain(conteudo);
       validarDoc(doc);
       carregar({ formato: 'cena', versao: 1, meta: metaVazia(titulo || nomeBase(cam), autor || ''), guiao: doc, storyboard: {} }, null, true);
-      avisar('Guião Fountain importado.');
+      avisar(t('Guião Fountain importado.'));
     } catch (e: any) {
-      avisar(e?.message || 'Não foi possível abrir este ficheiro.');
+      avisar(e?.message || t('Não foi possível abrir este ficheiro.'));
     }
   }, [carregar, avisar]);
 
   const comConfirmacao = useCallback((acao: () => void) => {
     if (!estadoRef.current.porGuardar) { acao(); return; }
     setConfirmacao({
-      titulo: 'Tens alterações por guardar',
-      texto: 'Se continuares sem guardar, perdes o que escreveste desde a última gravação.',
+      titulo: t('Tens alterações por guardar'),
+      texto: t('Se continuares sem guardar, perdes o que escreveste desde a última gravação.'),
       botoes: [
-        { rotulo: 'Cancelar', acao: () => {} },
-        { rotulo: 'Não guardar', acao: () => { window.cena.apagarRecuperacao(); acao(); } },
-        { rotulo: 'Guardar', principal: true, acao: async () => { if (await guardarRef.current(false)) acao(); } }
+        { rotulo: t('Cancelar'), acao: () => {} },
+        { rotulo: t('Não guardar'), acao: () => { window.cena.apagarRecuperacao(); acao(); } },
+        { rotulo: t('Guardar'), principal: true, acao: async () => { if (await guardarRef.current(false)) acao(); } }
       ]
     });
   }, []);
@@ -175,7 +179,7 @@ export default function App() {
 
   const abrirRecente = useCallback((r: Recente) => comConfirmacao(async () => {
     const f = await window.cena.abrirCaminho(r.caminho);
-    if (!f) { avisar('Este ficheiro já não existe neste sítio.'); window.cena.removerRecente(r.caminho); atualizarRecentes(); return; }
+    if (!f) { avisar(t('Este ficheiro já não existe neste sítio.')); window.cena.removerRecente(r.caminho); atualizarRecentes(); return; }
     abrirConteudo(f.caminho, f.conteudo);
   }), [abrirConteudo, comConfirmacao, avisar, atualizarRecentes]);
 
@@ -186,7 +190,7 @@ export default function App() {
     const destino = await window.cena.guardar({
       caminho: comoNovo ? null : estadoRef.current.caminho,
       conteudo: JSON.stringify(final),
-      nomeSugerido: final.meta.titulo || 'Sem título'
+      nomeSugerido: final.meta.titulo || t('Sem título')
     });
     if (!destino) return false;
     window.cena.apagarRecuperacao();
@@ -213,22 +217,22 @@ export default function App() {
   const exportar = useCallback(async (op: OpcoesExportar) => {
     const p = projetoAtual();
     if (!p) return;
-    const nome = p.meta.titulo || 'Sem título';
+    const nome = p.meta.titulo || t('Sem título');
     // O que exportar: o guião inteiro, ou os episódios escolhidos (séries)
     const eps = p.episodios ? ordenar(p.episodios).filter((e) => (op.episodios || [p.episodioAtivo]).includes(e.id)) : [];
     const unidades = p.episodios
       ? eps.map((e) => ({ id: e.id, rotulo: `${codigo(e)} — ${e.titulo}`, ficheiro: `${nome} ${codigo(e).replace(' · ', '')} ${e.titulo}`, guiao: e.guiao, storyboard: e.storyboard || {}, tecnico: e.tecnico || {}, levantamento: e.levantamento || {} }))
       : [{ id: 'unico', rotulo: '', ficheiro: nome, guiao: p.guiao, storyboard: p.storyboard, tecnico: p.tecnico || {}, levantamento: p.levantamento || {} }];
-    if (!unidades.length) { avisar('Escolhe pelo menos um episódio.'); return; }
+    if (!unidades.length) { avisar(t('Escolhe pelo menos um episódio.')); return; }
     const varios = unidades.length > 1;
-    const base = varios ? `${nome} — ${unidades.length} episódios` : unidades[0].ficheiro;
+    const base = varios ? `${nome} — ${t('{n} episódios', { n: unidades.length })}` : unidades[0].ficheiro;
     const comoProjeto = (u: typeof unidades[number]): Projeto => ({ ...p, guiao: u.guiao, storyboard: u.storyboard, tecnico: u.tecnico, levantamento: u.levantamento });
     const csvJunto = (gerar: (x: Projeto) => string) => {
       if (!p.episodios) return gerar(comoProjeto(unidades[0]));
       const linhas: string[] = [];
       unidades.forEach((u, i) => {
         const l = gerar(comoProjeto(u)).replace(/^\uFEFF/, '').split('\r\n').filter(Boolean);
-        if (i === 0) linhas.push('Episódio;' + l[0]);
+        if (i === 0) linhas.push(t('Episódio') + ';' + l[0]);
         l.slice(1).forEach((x) => linhas.push(`"${u.rotulo.replace(/"/g, '""')}";` + x));
       });
       return '\uFEFF' + linhas.join('\r\n') + '\r\n';
@@ -236,21 +240,21 @@ export default function App() {
     try {
       if (op.formato === 'pdf' || op.formato === 'tecnico-pdf' || op.formato === 'lev-pdf') {
         const modo = op.formato === 'pdf' ? 'guiao' : op.formato === 'tecnico-pdf' ? 'tecnico' : 'levantamento';
-        const sufixo = modo === 'tecnico' ? ' — guião técnico' : modo === 'levantamento' ? ' — levantamento' : '';
+        const sufixo = modo === 'tecnico' ? ' — ' + t('guião técnico') : modo === 'levantamento' ? ' — ' + t('levantamento') : '';
         const r = await window.cena.exportarPdf({
           nomeSugerido: base + sufixo, papel: definicoes.papel, meta: p.meta,
           rosto: modo === 'guiao' && op.rosto, cartaz: op.cartaz, numeros: op.numeros, modo, paisagem: modo !== 'guiao',
           personagens: p.personagens || [], locais: p.locais || {},
           unidades: unidades.map((u) => ({ subtitulo: u.rotulo, guiao: u.guiao, tecnico: u.tecnico, storyboard: modo === 'tecnico' ? u.storyboard : {}, levantamento: u.levantamento }))
         });
-        if (r) avisar(varios ? `${unidades.length} episódios exportados num só PDF.` : 'PDF exportado.');
+        if (r) avisar(varios ? t('{n} episódios exportados num só PDF.', { n: unidades.length }) : t('PDF exportado.'));
       } else if (op.formato === 'lev-csv' || op.formato === 'csv') {
         const lev = op.formato === 'lev-csv';
         const r = await window.cena.exportarTexto({
           conteudo: csvJunto((x) => (lev ? levantamentoCsv(x, definicoes.papel) : paraCsv(x, definicoes.papel))),
-          nomeSugerido: base + (lev ? ' — levantamento' : ' — guião técnico'), extensao: 'csv', nomeFormato: 'Folha de cálculo'
+          nomeSugerido: base + ' — ' + (lev ? t('levantamento') : t('guião técnico')), extensao: 'csv', nomeFormato: t('Folha de cálculo')
         });
-        if (r) avisar('Exportado para folha de cálculo.');
+        if (r) avisar(t('Exportado para folha de cálculo.'));
       } else {
         const fdx = op.formato === 'fdx';
         const gerar = (u: typeof unidades[number]) => {
@@ -261,15 +265,15 @@ export default function App() {
         const ext = fdx ? 'fdx' : 'fountain';
         if (varios) {
           const r = await window.cena.exportarPasta(unidades.map((u) => ({ nome: `${u.ficheiro}.${ext}`, conteudo: gerar(u) })));
-          if (r) avisar(`${unidades.length} episódios exportados para ${r}.`);
+          if (r) avisar(t('{n} episódios exportados para {pasta}.', { n: unidades.length, pasta: r }));
         } else {
           const r = await window.cena.exportarTexto({ conteudo: gerar(unidades[0]), nomeSugerido: base, extensao: ext, nomeFormato: fdx ? 'Final Draft' : 'Fountain' });
-          if (r) avisar(fdx ? 'Exportado para Final Draft.' : 'Exportado para Fountain.');
+          if (r) avisar(fdx ? t('Exportado para Final Draft.') : t('Exportado para Fountain.'));
         }
       }
       setDialogo(null);
     } catch (e: any) {
-      avisar('A exportação falhou: ' + (e?.message || 'erro desconhecido'));
+      avisar(t('A exportação falhou: ') + (e?.message || t('erro desconhecido')));
     }
   }, [projetoAtual, definicoes.papel, avisar]);
 
@@ -277,15 +281,15 @@ export default function App() {
     const p = projetoAtual();
     if (!p) return;
     const deps = equipaDe(p).map((d) => ({ ...d, membros: d.membros.filter((m) => !so || m.nome.trim()) })).filter((d) => d.membros.length);
-    if (!deps.length) { avisar('Ainda não há ninguém na equipa — escreve pelo menos um nome.'); return; }
-    const nome = `${p.meta.titulo || 'Sem título'} — equipa`;
+    if (!deps.length) { avisar(t('Ainda não há ninguém na equipa — escreve pelo menos um nome.')); return; }
+    const nome = `${p.meta.titulo || t('Sem título')} — ${t('equipa')}`;
     try {
       const r = formato === 'csv'
-        ? await window.cena.exportarTexto({ conteudo: equipaCsv(deps), nomeSugerido: nome, extensao: 'csv', nomeFormato: 'Folha de cálculo' })
+        ? await window.cena.exportarTexto({ conteudo: equipaCsv(deps), nomeSugerido: nome, extensao: 'csv', nomeFormato: t('Folha de cálculo') })
         : await window.cena.exportarPdf({ nomeSugerido: nome, papel: definicoes.papel, meta: p.meta, rosto: false, cartaz: false, numeros: false, modo: 'equipa', paisagem: true, guiao: p.guiao, equipa: deps });
-      if (r) avisar(formato === 'csv' ? 'Equipa exportada para folha de cálculo.' : 'Lista da equipa exportada em PDF.');
+      if (r) avisar(formato === 'csv' ? t('Equipa exportada para folha de cálculo.') : t('Lista da equipa exportada em PDF.'));
     } catch (e: any) {
-      avisar('A exportação falhou: ' + (e?.message || 'erro desconhecido'));
+      avisar(t('A exportação falhou: ') + (e?.message || t('erro desconhecido')));
     }
   }, [projetoAtual, definicoes.papel, avisar]);
 
@@ -300,11 +304,11 @@ export default function App() {
       try { p = JSON.parse(r.conteudo); if (p.formato !== 'cena') throw new Error(); } catch { window.cena.apagarRecuperacao(); return; }
       const quando = new Date(r.quando);
       setConfirmacao({
-        titulo: 'Há um guião por recuperar',
-        texto: `O Cena Um fechou antes de guardares «${p.meta?.titulo || 'Sem título'}». A cópia de segurança é de ${quando.toLocaleDateString('pt-PT')} às ${quando.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}.`,
+        titulo: t('Há um guião por recuperar'),
+        texto: t('O Cena Um fechou antes de guardares «{titulo}». A cópia de segurança é de {data} às {hora}.', { titulo: p.meta?.titulo || t('Sem título'), data: quando.toLocaleDateString(locale()), hora: quando.toLocaleTimeString(locale(), { hour: '2-digit', minute: '2-digit' }) }),
         botoes: [
-          { rotulo: 'Descartar', acao: () => { window.cena.apagarRecuperacao(); } },
-          { rotulo: 'Recuperar', principal: true, acao: () => { carregar(p, null, true); avisar('Guião recuperado. Guarda-o num ficheiro para não voltares a depender da cópia de segurança.'); } }
+          { rotulo: t('Descartar'), acao: () => { window.cena.apagarRecuperacao(); } },
+          { rotulo: t('Recuperar'), principal: true, acao: () => { carregar(p, null, true); avisar(t('Guião recuperado. Guarda-o num ficheiro para não voltares a depender da cópia de segurança.')); } }
         ]
       });
     });
@@ -342,15 +346,15 @@ export default function App() {
     return () => window.removeEventListener('keydown', tecla);
   }, [abrir, ecra]);
 
-  const nomeFicheiro = caminho ? caminho.split(/[\\/]/).pop()! : projeto ? `${projeto.meta.titulo || 'Sem título'} (não guardado)` : null;
+  const nomeFicheiro = caminho ? caminho.split(/[\\/]/).pop()! : projeto ? `${projeto.meta.titulo || t('Sem título')} ${t('(não guardado)')}` : null;
 
   definirTeatro(projeto?.meta.tipo === 'teatro');
   return (
     <div className="app">
       <BarraTitulo ficheiro={ecra === 'editor' ? nomeFicheiro : null} porGuardar={porGuardar} guardadoAs={guardadoAs} autoGuardar={caminho ? minutosAuto : 0}
         episodio={ecra === 'editor' && projeto && episodioAtivo(projeto) ? `${codigo(episodioAtivo(projeto)!)} — ${episodioAtivo(projeto)!.titulo}` : null}
-        onGuardar={() => guardarRef.current(false).then((ok) => { if (ok) avisar('Guião guardado.'); })}
-        onGuardarComo={() => guardarRef.current(true).then((ok) => { if (ok) avisar('Guião guardado com outro nome.'); })} />
+        onGuardar={() => guardarRef.current(false).then((ok) => { if (ok) avisar(t('Guião guardado.')); })}
+        onGuardarComo={() => guardarRef.current(true).then((ok) => { if (ok) avisar(t('Guião guardado com outro nome.')); })} />
       {ecra === 'inicio' && (
         <Inicio
           recentes={recentes}

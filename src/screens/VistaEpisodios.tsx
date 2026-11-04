@@ -4,6 +4,7 @@ import { schema } from '../editor/schema';
 import { calcularLayout, formatarTempo, Layout } from '../editor/layout';
 import { codigo, novoEpisodio, ordenar } from '../io/episodios';
 import { novoId } from '../editor/schema';
+import { t, tp } from '../i18n';
 
 interface Props {
   projeto: Projeto;
@@ -51,53 +52,53 @@ export default function VistaEpisodios({ projeto, layoutAtual, papel, onAbrir, o
     const copia: Episodio = JSON.parse(JSON.stringify(e));
     copia.id = novoId();
     copia.numero = n;
-    copia.titulo = `${e.titulo} (cópia)`;
+    copia.titulo = t('{titulo} (cópia)', { titulo: e.titulo });
     onAlterar((l) => [...l, copia]);
   };
   const apagar = (e: Episodio) => confirmar(
-    `Apagar ${codigo(e)} — ${e.titulo}?`,
-    'O guião, o storyboard, o guião técnico e o levantamento deste episódio desaparecem. Se ainda não guardaste, podes fechar sem guardar para recuperar.',
+    t('Apagar {ep}?', { ep: `${codigo(e)} — ${e.titulo}` }),
+    t('O guião, o storyboard, o guião técnico e o levantamento deste episódio desaparecem. Se ainda não guardaste, podes fechar sem guardar para recuperar.'),
     () => onAlterar((l) => l.filter((x) => x.id !== e.id))
   );
 
   return (
     <main className="vista">
       <div className="vista-cab">
-        <h1>Episódios</h1>
-        <span className="vista-sub">{eps.length} episódio{eps.length === 1 ? '' : 's'} · {temporadas.length} temporada{temporadas.length === 1 ? '' : 's'} · {totalPag} páginas · ≈ {formatarTempo(totalMin)} no total</span>
+        <h1>{t('Episódios')}</h1>
+        <span className="vista-sub">{tp(eps.length, '{n} episódio', '{n} episódios')} · {tp(temporadas.length, '{n} temporada', '{n} temporadas')} · {tp(totalPag, '{n} página', '{n} páginas')} · {t('≈ {tempo} no total', { tempo: formatarTempo(totalMin) })}</span>
         <span className="flex1" />
-        <button className="btn" onClick={() => juntar(Math.max(...temporadas) + 1)}>+ Nova temporada</button>
+        <button className="btn" onClick={() => juntar(Math.max(...temporadas) + 1)}>{t('+ Nova temporada')}</button>
       </div>
       <div className="tec-lista">
-        {temporadas.map((t) => (
-          <section key={t} className="temporada">
+        {temporadas.map((tmp) => (
+          <section key={tmp} className="temporada">
             <div className="temporada-cab">
-              <h2>Temporada {t}</h2>
+              <h2>{t('Temporada {n}', { n: tmp })}</h2>
               <span className="flex1" />
-              <button className="btn btn-ambar" onClick={() => juntar(t)}>+ Episódio</button>
+              <button className="btn btn-ambar" onClick={() => juntar(tmp)}>{t('+ Episódio')}</button>
             </div>
             <div className="grelha-episodios">
-              {eps.filter((e) => e.temporada === t).map((e, i, daTemp) => {
+              {eps.filter((e) => e.temporada === tmp).map((e, i, daTemp) => {
                 const l = stats.get(e.id);
                 const ativo = e.id === projeto.episodioAtivo;
                 return (
                   <article key={e.id} className={'cartao-episodio' + (ativo ? ' ativo' : '')}>
                     <div className="ce-cab">
                       <span className="ce-codigo">{codigo(e)}</span>
-                      {ativo && <span className="ce-aberto">Aberto</span>}
+                      {ativo && <span className="ce-aberto">{t('Aberto')}</span>}
                       <span className="flex1" />
-                      <button className="btn-icone" aria-label="Mover para trás" disabled={i === 0} onClick={() => mover(e, -1)}>←</button>
-                      <button className="btn-icone" aria-label="Mover para a frente" disabled={i === daTemp.length - 1} onClick={() => mover(e, 1)}>→</button>
+                      <button className="btn-icone" aria-label={t('Mover para trás')} disabled={i === 0} onClick={() => mover(e, -1)}>←</button>
+                      <button className="btn-icone" aria-label={t('Mover para a frente')} disabled={i === daTemp.length - 1} onClick={() => mover(e, 1)}>→</button>
                     </div>
-                    <input className="ce-titulo" value={e.titulo} aria-label={`Título de ${codigo(e)}`} spellCheck
+                    <input className="ce-titulo" value={e.titulo} aria-label={t('Título de {ep}', { ep: codigo(e) })} spellCheck
                       onChange={(ev) => mudar(e.id, { titulo: ev.target.value })} />
-                    <textarea className="cp-desc" rows={3} value={e.sinopse} placeholder="Sinopse do episódio…" spellCheck
-                      aria-label={`Sinopse de ${codigo(e)}`} onChange={(ev) => mudar(e.id, { sinopse: ev.target.value })} />
-                    <div className="vista-sub">{l ? `${l.cenas.length} cena${l.cenas.length === 1 ? '' : 's'} · ${l.paginas} pág. · ≈ ${formatarTempo(l.minutos)}` : '—'}</div>
+                    <textarea className="cp-desc" rows={3} value={e.sinopse} placeholder={t('Sinopse do episódio…')} spellCheck
+                      aria-label={t('Sinopse de {ep}', { ep: codigo(e) })} onChange={(ev) => mudar(e.id, { sinopse: ev.target.value })} />
+                    <div className="vista-sub">{l ? `${tp(l.cenas.length, '{n} cena', '{n} cenas')} · ${t('{n} pág.', { n: l.paginas })} · ≈ ${formatarTempo(l.minutos)}` : '—'}</div>
                     <div className="ce-acoes">
-                      <button className="btn btn-claro" onClick={() => onAbrir(e.id)}>{ativo ? 'Ir para o guião' : 'Abrir'}</button>
-                      <button className="btn" onClick={() => duplicar(e)}>Duplicar</button>
-                      <button className="btn" style={{ color: 'var(--erro)' }} disabled={eps.length === 1} onClick={() => apagar(e)}>Apagar</button>
+                      <button className="btn btn-claro" onClick={() => onAbrir(e.id)}>{ativo ? t('Ir para o guião') : t('Abrir')}</button>
+                      <button className="btn" onClick={() => duplicar(e)}>{t('Duplicar')}</button>
+                      <button className="btn" style={{ color: 'var(--erro)' }} disabled={eps.length === 1} onClick={() => apagar(e)}>{t('Apagar')}</button>
                     </div>
                   </article>
                 );
