@@ -208,6 +208,20 @@ ipcMain.handle('ficheiro:exportar-texto', async (_e, { conteudo, nomeSugerido, e
   return r.filePath;
 });
 
+ipcMain.handle('ficheiro:exportar-pasta', async (_e, ficheiros) => {
+  const r = await dialog.showOpenDialog(janela, {
+    title: 'Escolher a pasta para os episódios',
+    properties: ['openDirectory', 'createDirectory']
+  });
+  if (r.canceled || !r.filePaths[0]) return null;
+  const pasta = r.filePaths[0];
+  for (const f of ficheiros) {
+    const nome = String(f.nome).replace(/[<>:"/\\|?*\u0000-\u001f]/g, '-').trim();
+    fs.writeFileSync(path.join(pasta, nome), f.conteudo, 'utf8');
+  }
+  return pasta;
+});
+
 ipcMain.handle('ficheiro:escolher-imagens', async (_e, multiplas) => {
   const r = await dialog.showOpenDialog(janela, {
     title: 'Escolher imagem',

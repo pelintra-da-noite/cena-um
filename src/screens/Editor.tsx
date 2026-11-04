@@ -11,6 +11,9 @@ import VistaStoryboard from './VistaStoryboard';
 import VistaTecnico from './VistaTecnico';
 import VistaPersonagens from './VistaPersonagens';
 import VistaLevantamento from './VistaLevantamento';
+import VistaEpisodios from './VistaEpisodios';
+import { codigo, novoEpisodio, ordenar } from '../io/episodios';
+import type { Episodio } from '../types';
 import Confirmar, { PedidoConfirmacao } from '../components/Confirmar';
 import MenuFormatacao from '../components/MenuFormatacao';
 import PainelHistorico from '../components/PainelHistorico';
@@ -32,6 +35,8 @@ interface Props {
   onAbrirDefinicoes: () => void;
   onExportar: (tipo?: 'guiao' | 'tecnico' | 'levantamento') => void;
   avisar: (t: string) => void;
+  onTrocarEpisodio: (id: string) => void;
+  onAlterarEpisodios: (f: (l: Episodio[]) => Episodio[], abrir?: string) => void;
 }
 
 // Guia de estrutura para curtas (páginas pensadas para ~12 minutos; escala com a duração prevista)
@@ -57,7 +62,7 @@ export default function Editor(props: Props) {
   const [procura, setProcura] = useState('');
   const [foco, setFoco] = useState(false);
   const [visor, setVisor] = useState<{ cenaId: string; i: number } | null>(null);
-  const [vista, setVista] = useState<'guiao' | 'quadro' | 'storyboard' | 'tecnico' | 'personagens' | 'levantamento'>('guiao');
+  const [vista, setVista] = useState<'guiao' | 'quadro' | 'storyboard' | 'tecnico' | 'personagens' | 'levantamento' | 'episodios'>('guiao');
   const [confirmacao, setConfirmacao] = useState<PedidoConfirmacao | null>(null);
   const confirmar = (titulo: string, texto: string, acao: () => void) => setConfirmacao({
     titulo, texto, botoes: [{ rotulo: 'Cancelar', acao: () => {} }, { rotulo: 'Continuar', principal: true, acao }]
@@ -256,6 +261,11 @@ export default function Editor(props: Props) {
       {/* Barra de ícones */}
       <nav className="trilho" aria-label="Secções">
         <button aria-label="Início" title="Início" onClick={props.onInicio}><ICasa /></button>
+        {projeto.episodios && (
+          <button aria-label="Episódios" title="Episódios" className={vista === 'episodios' ? 'ativo' : ''} onClick={() => irPara('episodios')}>
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="7" width="14" height="13" rx="1.5" /><path d="M7 4h12a2 2 0 012 2v11" /><path d="M8 12l4 2.5L8 17z" /></svg>
+          </button>
+        )}
         <button aria-label="Guião" title="Guião" className={vista === 'guiao' ? 'ativo' : ''} onClick={() => irPara('guiao')}><IGuiao /></button>
         <button aria-label="Quadro de cenas" title="Quadro de cenas" className={vista === 'quadro' ? 'ativo' : ''} onClick={() => irPara('quadro')}><IQuadro /></button>
         <button aria-label="Storyboard" title="Storyboard" className={vista === 'storyboard' ? 'ativo' : ''} onClick={() => irPara('storyboard')}><IStoryboard /></button>
@@ -273,6 +283,24 @@ export default function Editor(props: Props) {
       <div style={{ display: vista === 'guiao' ? 'contents' : 'none' }}>
       {/* Cenas */}
       <aside className="painel-cenas" aria-label="Cenas">
+        {projeto.episodios && (
+          <div className="seletor-episodio">
+            <label className="mf-rotulo" htmlFor="sel-ep">Episódio</label>
+            <select id="sel-ep" className="mf-select" value={projeto.episodioAtivo}
+              onChange={(e) => {
+                if (e.target.value === '__novo') {
+                  const atual = projeto.episodios!.find((x) => x.id === projeto.episodioAtivo);
+                  const t = atual?.temporada || 1;
+                  const n = Math.max(0, ...projeto.episodios!.filter((x) => x.temporada === t).map((x) => x.numero)) + 1;
+                  const ep = novoEpisodio(t, n);
+                  props.onAlterarEpisodios((l) => [...l, ep], ep.id);
+                } else props.onTrocarEpisodio(e.target.value);
+              }}>
+              {ordenar(projeto.episodios).map((e) => <option key={e.id} value={e.id}>{codigo(e)} — {e.titulo}</option>)}
+              <option value="__novo">+ Novo episódio</option>
+            </select>
+          </div>
+        )}
         <div className="painel-cab">
           <span className="t">Cenas</span>
           <span className="n">{layout?.cenas.length || 0} cena{layout?.cenas.length === 1 ? '' : 's'}</span>
@@ -441,6 +469,11 @@ export default function Editor(props: Props) {
       {vista === 'tecnico' && estado && layout && (
         <VistaTecnico estado={estado} layout={layout} projeto={projeto} onProjeto={onProjeto} onIrParaCena={irParaCena}
           onExportar={() => props.onExportar('tecnico')} confirmar={confirmar} />
+      )}
+      {vista === 'episodios' && projeto.episodios && layout && (
+        <VistaEpisodios projeto={projeto} layoutAtual={layout} papel={definicoes.papel}
+          onAbrir={(id) => { if (id === projeto.episodioAtivo) irPara('guiao'); else props.onTrocarEpisodio(id); }}
+          onAlterar={props.onAlterarEpisodios} confirmar={confirmar} />
       )}
       {vista === 'personagens' && estado && layout && (
         <VistaPersonagens estado={estado} layout={layout} projeto={projeto} papel={definicoes.papel} onProjeto={onProjeto}

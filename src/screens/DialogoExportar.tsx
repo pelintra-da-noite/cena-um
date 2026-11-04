@@ -7,6 +7,7 @@ export interface OpcoesExportar {
   rosto: boolean;
   cartaz: boolean;
   numeros: boolean;
+  episodios?: string[]; // séries: ids dos episódios a exportar
 }
 
 interface Props {
@@ -15,6 +16,8 @@ interface Props {
   onExportar: (o: OpcoesExportar) => Promise<void> | void;
   onFechar: () => void;
   inicial?: 'guiao' | 'tecnico' | 'levantamento';
+  episodios?: { id: string; rotulo: string }[]; // só nas séries
+  episodioAtivo?: string;
 }
 
 const FORMATOS: { id: OpcoesExportar['formato']; nome: string; desc: string }[] = [
@@ -31,9 +34,14 @@ const FORMATOS_LEV: typeof FORMATOS = [
   { id: 'lev-csv', nome: 'Levantamento em folha de cálculo (.csv)', desc: 'Uma linha por cena, para planear a rodagem.' }
 ];
 
-export default function DialogoExportar({ temCartaz, papel, onExportar, onFechar, inicial }: Props) {
+export default function DialogoExportar({ temCartaz, papel, onExportar, onFechar, inicial, episodios, episodioAtivo }: Props) {
   const [o, setO] = useState<OpcoesExportar>({ formato: inicial === 'tecnico' ? 'tecnico-pdf' : inicial === 'levantamento' ? 'lev-pdf' : 'pdf', rosto: true, cartaz: false, numeros: true });
   const [ocupado, setOcupado] = useState(false);
+  const [alcance, setAlcance] = useState<'atual' | 'todos' | 'escolher'>('atual');
+  const [escolhidos, setEscolhidos] = useState<string[]>(episodioAtivo ? [episodioAtivo] : []);
+  const idsAExportar = !episodios ? undefined : alcance === 'atual' ? [episodioAtivo!] : alcance === 'todos' ? episodios.map((e) => e.id) : escolhidos;
+  const varios = (idsAExportar?.length || 0) > 1;
+  const rotuloAtivo = episodios?.find((e) => e.id === episodioAtivo)?.rotulo;
   const caixa = (chave: 'rosto' | 'cartaz' | 'numeros', rotulo: string, desativado = false) => (
     <label style={{ display: 'flex', gap: 10, alignItems: 'center', fontSize: 13, opacity: desativado ? 0.45 : 1 }}>
       <input type="checkbox" checked={o[chave] && !desativado} disabled={desativado}
@@ -51,6 +59,29 @@ export default function DialogoExportar({ temCartaz, papel, onExportar, onFechar
           <button className="btn-icone" aria-label="Fechar" onClick={onFechar}><IFechar /></button>
         </div>
         <div className="dialogo-corpo" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {episodios && (
+            <div className="exp-episodios">
+              <div className="sobretitulo">Episódios</div>
+              <div className="segmentos" role="radiogroup" aria-label="Episódios a exportar" style={{ alignSelf: 'flex-start' }}>
+                <button role="radio" aria-checked={alcance === 'atual'} className={alcance === 'atual' ? 'ativo' : ''} onClick={() => setAlcance('atual')}>Episódio aberto</button>
+                <button role="radio" aria-checked={alcance === 'todos'} className={alcance === 'todos' ? 'ativo' : ''} onClick={() => setAlcance('todos')}>Todos ({episodios.length})</button>
+                <button role="radio" aria-checked={alcance === 'escolher'} className={alcance === 'escolher' ? 'ativo' : ''} onClick={() => setAlcance('escolher')}>Escolher…</button>
+              </div>
+              {alcance === 'atual' && <span className="vista-sub">{rotuloAtivo}</span>}
+              {alcance === 'todos' && <span className="vista-sub">Em PDF, ficam todos num só ficheiro, cada um com a sua folha de rosto. Em Final Draft ou Fountain, sai um ficheiro por episódio.</span>}
+              {alcance === 'escolher' && (
+                <div className="lista-ep-exp">
+                  {episodios.map((e) => (
+                    <label key={e.id}>
+                      <input type="checkbox" checked={escolhidos.includes(e.id)} style={{ accentColor: '#E6A84A' }}
+                        onChange={(ev) => setEscolhidos((l) => (ev.target.checked ? [...l, e.id] : l.filter((x) => x !== e.id)))} />
+                      {e.rotulo}
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
           <div className="sobretitulo">Guião</div>
           {FORMATOS.map((f) => (
             <button key={f.id} className={'tipo' + (o.formato === f.id ? ' ativo' : '')} style={{ height: 58 }}
@@ -83,9 +114,10 @@ export default function DialogoExportar({ temCartaz, papel, onExportar, onFechar
         </div>
         <div className="dialogo-rodape">
           <button className="btn" onClick={onFechar}>Cancelar</button>
-          <button className="btn btn-ambar" disabled={ocupado}
-            onClick={async () => { setOcupado(true); try { await onExportar(o); } finally { setOcupado(false); } }}>
-            {ocupado ? 'A exportar…' : 'Exportar'}
+          <button className="btn btn-ambar"
+            disabled={ocupado || (!!episodios && !idsAExportar?.length)}
+            onClick={async () => { setOcupado(true); try { await onExportar({ ...o, episodios: idsAExportar }); } finally { setOcupado(false); } }}>
+            {ocupado ? 'A exportar…' : varios ? `Exportar ${idsAExportar!.length} episódios` : 'Exportar'}
           </button>
         </div>
       </div>

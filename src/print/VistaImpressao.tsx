@@ -14,6 +14,8 @@ interface Dados {
   cartaz: boolean;
   numeros: boolean;
   modo?: 'guiao' | 'tecnico' | 'levantamento';
+  subtitulo?: string; // séries: "T1 · E02 — Título"
+  unidades?: Partial<Dados>[]; // séries: vários episódios num só PDF
   personagens?: PersonagemInfo[];
   levantamento?: Projeto['levantamento'];
   locais?: Projeto['locais'];
@@ -49,6 +51,17 @@ export default function VistaImpressao() {
   }, [d]);
 
   if (!d) return null;
+  const lista: Dados[] = d.unidades && d.unidades.length ? d.unidades.map((u) => ({ ...d, ...u, unidades: undefined } as Dados)) : [d];
+  return (
+    <>
+      {lista.map((u, i) => (
+        <div key={i} style={{ breakBefore: i ? 'page' : undefined }}>{renderUnidade(u)}</div>
+      ))}
+    </>
+  );
+}
+
+function renderUnidade(d: Dados) {
   const doc = schema.nodeFromJSON(d.guiao);
   const layout = calcularLayout(doc, d.papel);
   const fmt = FORMATO[d.papel];
@@ -62,7 +75,7 @@ export default function VistaImpressao() {
       <div className="impressao">
         <style>{`@page { size: ${d.papel === 'carta' ? 'letter' : 'A4'} landscape; margin: .5in; } html, body, #root { height: auto; overflow: visible; background: #fff; }`}</style>
         <section className="pagina paisagem">
-          <div className="tp-cab"><b>{d.meta.titulo || 'Sem título'} — levantamento</b><span>{d.meta.autor} · {cenas.length} cenas · {formatarOitavos(cenas.reduce((x, c) => x + c.oitavos, 0))} páginas</span></div>
+          <div className="tp-cab"><b>{d.meta.titulo || 'Sem título'}{d.subtitulo ? ` · ${d.subtitulo}` : ''} — levantamento</b><span>{d.meta.autor} · {cenas.length} cenas · {formatarOitavos(cenas.reduce((x, c) => x + c.oitavos, 0))} páginas</span></div>
           <table className="tp">
             <thead><tr>
               <th style={{ width: '5%' }}>Cena</th><th style={{ width: '24%' }}>Cabeçalho</th><th style={{ width: '7%' }}>Int/Ext</th><th style={{ width: '9%' }}>Momento</th>
@@ -121,7 +134,7 @@ export default function VistaImpressao() {
       <div className="impressao">
         <style>{`@page { size: ${d.papel === 'carta' ? 'letter' : 'A4'} landscape; margin: .5in; } html, body, #root { height: auto; overflow: visible; background: #fff; }`}</style>
         <section className="pagina paisagem" style={estilo}>
-          <div className="tp-cab"><b>{d.meta.titulo || 'Sem título'} — guião técnico</b><span>{d.meta.autor}</span></div>
+          <div className="tp-cab"><b>{d.meta.titulo || 'Sem título'}{d.subtitulo ? ` · ${d.subtitulo}` : ''} — guião técnico</b><span>{d.meta.autor}</span></div>
           {layout.cenas.map((c) => {
             const planos = (d.tecnico || {})[c.id] || [];
             const quadros = (d.storyboard || {})[c.id] || [];
@@ -178,6 +191,7 @@ export default function VistaImpressao() {
       {d.rosto && (
         <section className="pagina rosto" style={estiloPagina}>
           <div className="t" style={{ marginTop: comCartaz ? '1.2in' : '3in' }}>{d.meta.titulo || 'Sem título'}</div>
+          {d.subtitulo && <div style={{ marginTop: '12pt' }}>{d.subtitulo}</div>}
           <div style={{ marginTop: '24pt' }}>Escrito por</div>
           <div style={{ marginTop: '12pt' }}>{d.meta.autor || ''}</div>
           {comCartaz && <img className="cartaz" style={{ marginTop: '0.8in' }} src={d.meta.cartaz!} alt="" />}

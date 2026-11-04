@@ -13,7 +13,7 @@ const TIPOS: { id: TipoProjeto; nome: string; sub: string; dur: number; un: stri
 interface Props {
   tipoInicial: TipoProjeto;
   onCancelar: () => void;
-  onCriar: (m: Omit<MetaProjeto, 'criado' | 'modificado' | 'guiaFeito'>) => void;
+  onCriar: (m: Omit<MetaProjeto, 'criado' | 'modificado' | 'guiaFeito'>, serie?: { temporada: number; episodios: number; primeiro: string }) => void;
   avisar: (t: string) => void;
 }
 
@@ -25,6 +25,9 @@ export default function NovoProjeto({ tipoInicial, onCancelar, onCriar, avisar }
   const [guia, setGuia] = useState(true);
   const [cartaz, setCartaz] = useState<string | null>(null);
   const [arrastar, setArrastar] = useState(false);
+  const [temporada, setTemporada] = useState('1');
+  const [nEpisodios, setNEpisodios] = useState('6');
+  const [primeiro, setPrimeiro] = useState('Piloto');
   const atual = TIPOS.find((t) => t.id === tipo)!;
 
   const usarImagem = async (dataUrl: string) => {
@@ -52,7 +55,11 @@ export default function NovoProjeto({ tipoInicial, onCancelar, onCriar, avisar }
       duracaoPrevista: Number.isFinite(d) && d > 0 ? d : atual.dur,
       guia: tipo === 'curta' && guia,
       cartaz
-    });
+    }, tipo === 'serie' ? {
+      temporada: Math.max(1, parseInt(temporada, 10) || 1),
+      episodios: Math.max(1, Math.min(40, parseInt(nEpisodios, 10) || 1)),
+      primeiro: primeiro.trim()
+    } : undefined);
   };
 
   return (
@@ -100,6 +107,23 @@ export default function NovoProjeto({ tipoInicial, onCancelar, onCriar, avisar }
               </div>
             </div>
 
+            {tipo === 'serie' && (
+              <div style={{ display: 'grid', gridTemplateColumns: '90px 130px minmax(0,1fr)', gap: 12 }}>
+                <div className="campo">
+                  <label htmlFor="np-temp">Temporada</label>
+                  <input id="np-temp" className="entrada" inputMode="numeric" value={temporada} onChange={(e) => setTemporada(e.target.value.replace(/\D/g, ''))} />
+                </div>
+                <div className="campo">
+                  <label htmlFor="np-neps">Episódios previstos</label>
+                  <input id="np-neps" className="entrada" inputMode="numeric" value={nEpisodios} onChange={(e) => setNEpisodios(e.target.value.replace(/\D/g, ''))} />
+                </div>
+                <div className="campo">
+                  <label htmlFor="np-prim">Título do 1.º episódio</label>
+                  <input id="np-prim" className="entrada" value={primeiro} placeholder="Piloto" onChange={(e) => setPrimeiro(e.target.value)} />
+                </div>
+              </div>
+            )}
+            {tipo === 'serie' && <div className="aviso-tracejado" style={{ marginTop: -6 }}>Todos os episódios ficam neste projeto. Podes juntar, renomear e reordenar episódios a qualquer momento no ecrã Episódios.</div>}
             {tipo === 'curta' ? (
               <div className="opcao">
                 <div style={{ flex: 1 }}>

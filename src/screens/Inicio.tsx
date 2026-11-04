@@ -58,7 +58,7 @@ export default function Inicio({ recentes, temProjetoAberto, onVoltar, onNovo, o
             <div style={{ background: '#FBFAF7', borderRadius: 4 }} />
             <div style={{ background: '#3A3C43', borderRadius: 4, border: '1px dashed #5A5C63' }} />
           </div>
-          <div className="txt"><b>Série de TV</b><small>Um ficheiro por episódio</small></div>
+          <div className="txt"><b>Série de TV</b><small>Episódios e temporadas num só projeto</small></div>
         </button>
         <button className="modelo" onClick={() => onNovo('teatro')}>
           <div className="prev"><Folha linhas={['f 26% 37%', 'n 90%', 'm 60%', 'f 22% 39%', 'n 84%']} /></div>
@@ -92,7 +92,7 @@ export default function Inicio({ recentes, temProjetoAberto, onVoltar, onNovo, o
               {r.capa ? <img className="capa" src={r.capa} alt="" /> : <div className="capa" />}
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div className="nome">{r.titulo || 'Sem título'}</div>
-                <div className="sub">{NOMES_TIPO[r.tipo]} · {r.paginas} página{r.paginas === 1 ? '' : 's'} · ≈ {formatarTempo(r.minutos)}</div>
+                <div className="sub">{NOMES_TIPO[r.tipo]}{r.episodios ? ` · ${r.episodios} episódio${r.episodios === 1 ? '' : 's'}` : ` · ${r.paginas} página${r.paginas === 1 ? '' : 's'} · ≈ ${formatarTempo(r.minutos)}`}</div>
               </div>
               <span className="quando">{quando(r.aberto)}</span>
             </button>

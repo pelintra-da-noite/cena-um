@@ -630,3 +630,25 @@ input.nome-ato:focus { border-color: var(--ambar); background: var(--fundo-1); }
 .lev-rodagem:hover { border-color: #4A4C53; }
 .lev-rodagem:focus { border: 1px solid var(--ambar); background: var(--fundo-1); }
 .lev-rodagem:not(:placeholder-shown) { border-style: solid; border-color: var(--linha-2); }
+
+/* Exportar episódios */
+.exp-episodios { display: flex; flex-direction: column; gap: 8px; padding: 12px 14px; border-radius: 10px; background: var(--superficie); margin-bottom: 6px; }
+.lista-ep-exp { display: flex; flex-direction: column; gap: 6px; max-height: 180px; overflow-y: auto; }
+.lista-ep-exp label { display: flex; gap: 10px; align-items: center; font-size: 13px; }
+
+/* ===== Séries: episódios ===== */
+.seletor-episodio { padding: 14px 12px 0; display: flex; flex-direction: column; gap: 6px; }
+.seletor-episodio .mf-select { width: 100%; }
+.temporada { display: flex; flex-direction: column; gap: 12px; }
+.temporada-cab { display: flex; align-items: center; gap: 12px; }
+.temporada-cab h2 { margin: 0; font-size: 15px; font-weight: 600; }
+.grelha-episodios { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+.cartao-episodio { background: var(--fundo-2); border: 1px solid var(--linha); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.cartao-episodio.ativo { border-color: rgba(230,168,74,.55); }
+.ce-cab { display: flex; align-items: center; gap: 8px; }
+.ce-codigo { font-family: var(--guiao); font-weight: 700; color: var(--ambar); font-size: 13px; }
+.ce-aberto { font-size: 11px; padding: 2px 8px; border-radius: 10px; background: rgba(230,168,74,.14); color: var(--ambar); }
+.ce-titulo { font-size: 15px; font-weight: 600; background: transparent; border: 1px solid transparent; border-radius: 7px; color: var(--texto); padding: 4px 6px; margin: 0 -6px; outline: none; user-select: text; }
+.ce-titulo:hover { border-color: var(--linha-3); }
+.ce-titulo:focus { border-color: var(--ambar); background: var(--fundo-1); }
+.ce-acoes { display: flex; gap: 6px; flex-wrap: wrap; }

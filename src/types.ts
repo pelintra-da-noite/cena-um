@@ -40,6 +40,19 @@ export interface MetaProjeto {
   atoCena?: Record<string, number>; // id da cena → índice do ato
 }
 
+/** Um episódio de uma série: cada um tem o seu guião e os seus materiais de cena */
+export interface Episodio {
+  id: string;
+  temporada: number;
+  numero: number;
+  titulo: string;
+  sinopse: string;
+  guiao: any;
+  storyboard: Record<string, Quadro[]>;
+  tecnico?: Record<string, Plano[]>;
+  levantamento?: Record<string, Partial<Record<CategoriaLevantamento, string[]>>>;
+}
+
 export interface Projeto {
   formato: 'cena';
   versao: 1;
@@ -50,6 +63,10 @@ export interface Projeto {
   personagens?: PersonagemInfo[];
   levantamento?: Record<string, Partial<Record<CategoriaLevantamento, string[]>>>; // por id de cena
   locais?: Record<string, { rodagem: string }>; // por local do guião (em maiúsculas): onde vai ser filmado
+  // Séries: guiao/storyboard/tecnico/levantamento acima são os do episódio aberto;
+  // a lista guarda todos (personagens, locais e atos são partilhados pela série)
+  episodios?: Episodio[];
+  episodioAtivo?: string;
 }
 
 export interface Recente {
@@ -59,6 +76,7 @@ export interface Recente {
   paginas: number;
   minutos: number;
   capa: string | null; // miniatura pequena
+  episodios?: number;
   aberto?: number;
 }
 
@@ -94,6 +112,7 @@ declare global {
       abrirCaminho(caminho: string): Promise<FicheiroLido | null>;
       guardar(d: { caminho: string | null; conteudo: string; nomeSugerido: string }): Promise<string | null>;
       exportarTexto(d: { conteudo: string; nomeSugerido: string; extensao: string; nomeFormato: string }): Promise<string | null>;
+      exportarPasta(f: { nome: string; conteudo: string }[]): Promise<string | null>;
       escolherImagens(multiplas: boolean): Promise<{ nome: string; dataUrl: string }[]>;
       recentes(): Promise<Recente[]>;
       adicionarRecente(r: Recente): Promise<void>;

@@ -4,6 +4,7 @@ import { Claquete } from './Icones';
 interface Props {
   ficheiro: string | null;
   porGuardar: boolean;
+  episodio?: string | null;
   onGuardar?: () => void;
   onGuardarComo?: () => void;
 }
@@ -14,7 +15,7 @@ const IGuardar = () => (
   </svg>
 );
 
-export default function BarraTitulo({ ficheiro, porGuardar, onGuardar, onGuardarComo }: Props) {
+export default function BarraTitulo({ ficheiro, porGuardar, onGuardar, onGuardarComo, episodio }: Props) {
   return (
     <header className="titulo-barra">
       <Claquete />
@@ -23,6 +24,7 @@ export default function BarraTitulo({ ficheiro, porGuardar, onGuardar, onGuardar
         <>
           <span className="sep">/</span>
           <span className="ficheiro">{ficheiro}</span>
+          {episodio && <><span className="sep">/</span><span className="ficheiro" style={{ color: 'var(--ambar)' }}>{episodio}</span></>}
           <span className={'estado' + (porGuardar ? ' pendente' : '')}>· {porGuardar ? 'Por guardar' : 'Guardado'}</span>
           {onGuardar && (
             <div className="acoes-ficheiro">

@@ -26,6 +26,7 @@ O instalador ainda não tem assinatura digital. Na primeira vez, o Windows mostr
 - **Formatação livre com o botão direito**: tipo de letra, tamanho, cor, negrito, itálico, sublinhado, riscado e alinhamento (esquerda, centro, direita, justificado). A duração estimada não muda com a formatação.
 - **Corretor ortográfico PT-PT** do Windows (botão direito para sugestões).
 - **Papel escuro** opcional para escrever (o PDF sai sempre branco).
+- **Séries de TV**: todos os episódios e temporadas num só projeto, com ecrã de Episódios (título, sinopse, páginas, duração), troca rápida de episódio e personagens, locais e atos partilhados. Exporta o episódio aberto, todos ou só os que escolheres.
 - **Desfazer, refazer e histórico**: botões na barra do guião e um histórico agrupado por momentos (pausas na escrita, mover cenas, formatar, colar) para voltar a qualquer ponto desde que abriste o guião.
 - **Personagens**: ecrã próprio com descrição, falas, cenas onde falam e onde aparecem sem falar; acrescenta personagens que não têm falas.
 - **Levantamento**: por cena (INT/EXT, local, momento, páginas em oitavos, personagens, figurantes, adereços, guarda-roupa, caracterização, cenografia, veículos, animais, efeitos, som) e resumo por local e por personagem; exporta PDF e folha de cálculo. Seleciona uma palavra no guião e usa o botão direito para a juntar ao levantamento.

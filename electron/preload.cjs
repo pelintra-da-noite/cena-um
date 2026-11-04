@@ -7,6 +7,7 @@ contextBridge.exposeInMainWorld('cena', {
   abrirCaminho: (caminho) => ipcRenderer.invoke('ficheiro:abrir-caminho', caminho),
   guardar: (dados) => ipcRenderer.invoke('ficheiro:guardar', dados),
   exportarTexto: (dados) => ipcRenderer.invoke('ficheiro:exportar-texto', dados),
+  exportarPasta: (ficheiros) => ipcRenderer.invoke('ficheiro:exportar-pasta', ficheiros),
   escolherImagens: (multiplas) => ipcRenderer.invoke('ficheiro:escolher-imagens', multiplas),
   recentes: () => ipcRenderer.invoke('recentes:listar'),
   adicionarRecente: (item) => ipcRenderer.invoke('recentes:adicionar', item),
