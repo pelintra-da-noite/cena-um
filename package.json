@@ -1,7 +1,7 @@
 {
   "name": "cena-um",
   "productName": "Cena Um",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "Cena Um — escrita de guiões para cinema, televisão e teatro",
   "author": "Alexandre Serras",
   "main": "electron/main.cjs",

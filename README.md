@@ -28,7 +28,7 @@ O instalador ainda não tem assinatura digital. Na primeira vez, o Windows mostr
 - **Papel escuro** opcional para escrever (o PDF sai sempre branco).
 - **Séries de TV**: todos os episódios e temporadas num só projeto, com ecrã de Episódios (título, sinopse, páginas, duração), troca rápida de episódio e personagens, locais e atos partilhados. Exporta o episódio aberto, todos ou só os que escolheres.
 - **Desfazer, refazer e histórico**: botões na barra do guião e um histórico agrupado por momentos (pausas na escrita, mover cenas, formatar, colar) para voltar a qualquer ponto desde que abriste o guião.
-- **Personagens**: ecrã próprio com descrição, falas, cenas onde falam e onde aparecem sem falar; acrescenta personagens que não têm falas.
+- **Personagens**: ecrã próprio com descrição, falas, cenas onde falam e onde aparecem sem falar; acrescenta personagens que não têm falas e corrige à mão as cenas onde cada uma fala ou aparece (as correções valem também para o Levantamento).
 - **Levantamento**: por cena (INT/EXT, local, momento, páginas em oitavos, personagens, figurantes, adereços, guarda-roupa, caracterização, cenografia, veículos, animais, efeitos, som) e resumo por local e por personagem; exporta PDF e folha de cálculo. Seleciona uma palavra no guião e usa o botão direito para a juntar ao levantamento.
 - **Quadro de cenas**: cartões por ato, arrastar e largar para reordenar (com scroll automático junto às margens) (o guião acompanha; Ctrl+Z desfaz), atos com nome editável, vistas por personagem e por local.
 - **Storyboard completo**: todas as cenas com as suas imagens, legendas, reordenar e arrastar imagens do Explorador.

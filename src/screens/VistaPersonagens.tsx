@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import type { EditorState } from 'prosemirror-state';
-import type { Papel, Projeto } from '../types';
+import type { Papel, Projeto, AjusteCena } from '../types';
 import type { Layout } from '../editor/layout';
 import { formatarSegundos, calcularLayout } from '../editor/layout';
 import { schema } from '../editor/schema';
@@ -58,6 +58,35 @@ export default function VistaPersonagens({ estado, layout, projeto, papel, onPro
   ));
   const descricaoDe = (nome: string) => (projeto.personagens || []).find((x) => x.nome === nome)?.descricao || '';
   const indicePorNumero = new Map(cenas.map((c) => [c.numero, c.indice]));
+  const idPorNumero = new Map(cenas.map((c) => [c.numero, c.id]));
+
+  // O que o programa deteta sozinho (sem as correções à mão), para saber o que foi mudado pelo utilizador
+  const detetado = useMemo(() => {
+    const limpo = { ...projeto, personagens: (projeto.personagens || []).map((p) => ({ ...p, cenas: undefined })) };
+    const m = new Map<string, AjusteCena>();
+    for (const p of analisar(estado.doc, layout, limpo, papel).personagens) {
+      p.cenasComFalas.forEach((n) => m.set(`${p.nome}|${idPorNumero.get(n)}`, 'fala'));
+      p.cenasSemFalas.forEach((n) => m.set(`${p.nome}|${idPorNumero.get(n)}`, 'sem'));
+    }
+    return m;
+  }, [estado.doc, layout, projeto, papel]); // eslint-disable-line
+  const ajustesDe = (nome: string) => (projeto.personagens || []).find((p) => p.nome === nome)?.cenas || {};
+  const ajustar = (nome: string, cenaId: string, valor: AjusteCena) => {
+    const natural = detetado.get(`${nome}|${cenaId}`) || 'fora';
+    onProjeto((p) => ({ ...p, personagens: atualizarPersonagem(p.personagens, nome, (x) => {
+      const c = { ...(x.cenas || {}) };
+      if (valor === natural) delete c[cenaId]; else c[cenaId] = valor;
+      return { ...x, cenas: Object.keys(c).length ? c : undefined };
+    }) }));
+  };
+  const repor = (nome: string) => {
+    const ids = new Set(cenas.map((c) => c.id));
+    onProjeto((p) => ({ ...p, personagens: atualizarPersonagem(p.personagens, nome, (x) => {
+      const c = Object.fromEntries(Object.entries(x.cenas || {}).filter(([k]) => !ids.has(k)));
+      return { ...x, cenas: Object.keys(c).length ? c : undefined };
+    }) }));
+  };
+  const [aAcrescentar, setAAcrescentar] = useState<string | null>(null); // "NOME|fala" ou "NOME|sem"
 
   const adicionar = () => {
     const nome = novo.trim().toUpperCase();
@@ -71,9 +100,38 @@ export default function VistaPersonagens({ estado, layout, projeto, papel, onPro
   const remover = (nome: string) =>
     onProjeto((p) => ({ ...p, personagens: atualizarPersonagem(p.personagens, nome, () => null) }));
 
-  const chips = (nums: number[]) => nums.map((n) => (
-    <button key={n} className="chip-cena" onClick={() => onIrParaCena(indicePorNumero.get(n) ?? 0)} title={`Abrir a cena ${n}`}>{n}</button>
-  ));
+  const linhaCenas = (nome: string, tipo: 'fala' | 'sem', nums: number[], rot: string) => {
+    const aj = ajustesDe(nome);
+    const chave = `${nome}|${tipo}`;
+    const livres = cenas.filter((c) => !nums.includes(c.numero));
+    return (
+      <div className="cp-cenas">
+        <span className="vista-sub">{rot}</span>
+        <div>
+          {nums.map((n) => {
+            const id = idPorNumero.get(n)!;
+            const mexido = !!aj[id];
+            return (
+              <span key={n} className={'chip-cena chip-editavel' + (mexido ? ' mexido' : '')}>
+                <button onClick={() => onIrParaCena(indicePorNumero.get(n) ?? 0)} title={`Abrir a cena ${n}${mexido ? ' (corrigida à mão)' : ''}`}>{n}</button>
+                <button className="chip-x" aria-label={`Tirar a cena ${n}`} title="Tirar desta lista" onClick={() => ajustar(nome, id, 'fora')}>×</button>
+              </span>
+            );
+          })}
+          {aAcrescentar === chave ? (
+            <select className="chip-sel" autoFocus defaultValue="" aria-label={`Acrescentar cena a «${rot}»`}
+              onBlur={() => setAAcrescentar(null)}
+              onChange={(e) => { if (e.target.value) ajustar(nome, e.target.value, tipo); setAAcrescentar(null); }}>
+              <option value="" disabled>Cena…</option>
+              {livres.map((c) => <option key={c.id} value={c.id}>{c.numero} · {c.cabecalho || 'sem cabeçalho'}</option>)}
+            </select>
+          ) : (
+            livres.length > 0 && <button className="chip-cena chip-mais" title="Acrescentar uma cena" aria-label={`Acrescentar cena a «${rot}» de ${titulo(nome)}`} onClick={() => setAAcrescentar(chave)}>+</button>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <main className="vista">
@@ -94,7 +152,7 @@ export default function VistaPersonagens({ estado, layout, projeto, papel, onPro
       </div>
 
       {ambito === 'serie' && serie && (
-        <div className="tabela-serie">
+        <div className="rolar-serie"><div className="tabela-serie">
           <div className="ts-linha ts-cab"><span>Personagem</span><span>Fala nos episódios</span><span>Aparece sem falar</span><span>Falas</span><span>Diálogo</span></div>
           {naSerie.map((p) => (
             <div key={p.nome} className="ts-linha">
@@ -108,7 +166,7 @@ export default function VistaPersonagens({ estado, layout, projeto, papel, onPro
           ))}
           {naSerie.length === 0 && <div className="vista-vazia">Ainda não há personagens em nenhum episódio.</div>}
           <div className="nota-rodape">Os números são temporada.episódio — clica para abrir esse episódio. A descrição de cada personagem é a mesma em todos os episódios.</div>
-        </div>
+        </div></div>
       )}
 
       {ambito === 'episodio' && personagens.length === 0 && (
@@ -131,18 +189,15 @@ export default function VistaPersonagens({ estado, layout, projeto, papel, onPro
             </div>
             <textarea className="cp-desc" rows={2} value={p.descricao} spellCheck placeholder="Quem é? Idade, traço marcante, o que quer…"
               aria-label={`Descrição de ${titulo(p.nome)}`} onChange={(e) => descrever(p.nome, e.target.value)} />
-            <div className="cp-cenas">
-              <span className="vista-sub">Fala nas cenas</span>
-              <div>{p.cenasComFalas.length ? chips(p.cenasComFalas) : <span className="vista-sub">—</span>}</div>
-            </div>
-            <div className="cp-cenas">
-              <span className="vista-sub">Aparece sem falar</span>
-              <div>{p.cenasSemFalas.length ? chips(p.cenasSemFalas) : <span className="vista-sub">—</span>}</div>
-            </div>
+            {linhaCenas(p.nome, 'fala', p.cenasComFalas, 'Fala nas cenas')}
+            {linhaCenas(p.nome, 'sem', p.cenasSemFalas, 'Aparece sem falar')}
+            {cenas.some((c) => ajustesDe(p.nome)[c.id]) && (
+              <button className="btn-fantasma cp-repor" onClick={() => repor(p.nome)}>Repor o que o programa deteta</button>
+            )}
           </article>
         ))}
       </div>}
-      {ambito === 'episodio' && <div className="nota-rodape">«Aparece sem falar» é detetado quando o nome da personagem está escrito na ação de uma cena onde ela não tem falas.</div>}
+      {ambito === 'episodio' && <div className="nota-rodape">«Aparece sem falar» é detetado quando o nome da personagem está escrito na ação de uma cena onde ela não tem falas. Podes corrigir à mão: + acrescenta uma cena, × tira-a. As cenas corrigidas ficam marcadas a âmbar e valem também para o Levantamento.</div>}
     </main>
   );
 }

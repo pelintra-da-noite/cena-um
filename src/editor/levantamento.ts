@@ -110,6 +110,15 @@ export function analisar(doc: PMNode, layout: Layout, projeto: Projeto, papel: P
     }
     const textoAcao = acao.join(' ');
     const aparecem = nomes.filter((n) => !falam.includes(n) && re(n).test(textoAcao));
+    // Correções feitas à mão no ecrã Personagens
+    for (const n of nomes) {
+      const aj = descr.get(n)?.cenas?.[b.id];
+      if (!aj) continue;
+      const tira = (l: string[]) => { const i = l.indexOf(n); if (i >= 0) l.splice(i, 1); };
+      tira(falam); tira(aparecem);
+      if (aj === 'fala') falam.push(n);
+      if (aj === 'sem') aparecem.push(n);
+    }
     for (const n of falam) resumo.get(n)?.cenasComFalas.push(ci.numero);
     for (const n of aparecem) resumo.get(n)?.cenasSemFalas.push(ci.numero);
     const cab = ci.texto;

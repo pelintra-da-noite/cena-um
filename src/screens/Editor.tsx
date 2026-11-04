@@ -339,7 +339,7 @@ export default function Editor(props: Props) {
         <div className="barra-elementos">
           <div className="grupo-elementos" role="group" aria-label="Elemento do guião">
             {ELEMENTOS.map((el) => (
-              <button key={el} className={elAtual === el ? 'ativo' : ''} aria-pressed={elAtual === el}
+              <button key={el} className={elAtual === el ? 'ativo' : ''} aria-pressed={elAtual === el} data-rotulo={rotulo(el, projeto.meta.tipo)}
                 title={`${rotulo(el, projeto.meta.tipo)} (Ctrl+${SEM_TECLAS[el]})`}
                 onMouseDown={(e) => e.preventDefault()} onClick={() => mudarElemento(el)}>
                 {rotulo(el, projeto.meta.tipo)}

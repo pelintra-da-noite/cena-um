@@ -268,6 +268,7 @@ ipcMain.handle('pdf:exportar', async (_e, dados) => {
     parent: janela, // fecha-se sempre com a janela principal
     width: 900,
     height: 1200,
+    backgroundColor: '#FFFFFF',
     webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true }
   });
   try {

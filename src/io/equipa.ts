@@ -7,7 +7,7 @@ export const novoDepartamento = (nome = 'Novo departamento', funcoes: string[] =
 const CINEMA: [string, string[]][] = [
   ['Realização', ['Realizador', '1.º Assistente de realização', '2.º Assistente de realização', 'Anotador / continuidade']],
   ['Produção', ['Produtor', 'Diretor de produção', 'Chefe de produção', 'Assistente de produção', 'Responsável de locais']],
-  ['Imagem', ['Diretor de fotografia', 'Operador de câmara', '1.º Assistente de câmara (foco)', '2.º Assistente de câmara', 'Logger / DIT']],
+  ['Fotografia', ['Diretor de fotografia', 'Operador de câmara', '1.º Assistente de câmara (foco)', '2.º Assistente de câmara', 'Logger / DIT']],
   ['Luz e maquinaria', ['Chefe eletricista', 'Eletricista', 'Chefe maquinista', 'Maquinista']],
   ['Som', ['Técnico de som', 'Perchista']],
   ['Arte', ['Diretor de arte', 'Cenógrafo', 'Aderecista']],
@@ -31,6 +31,8 @@ export function equipaPadrao(tipo: TipoProjeto): Departamento[] {
   return (tipo === 'teatro' ? TEATRO : CINEMA).map(([nome, funcoes]) => novoDepartamento(nome, funcoes));
 }
 export const equipaDe = (p: Projeto): Departamento[] => p.equipa || equipaPadrao(p.meta.tipo);
+/** Projetos feitos na 0.6.0 chamavam «Imagem» ao departamento de fotografia */
+export const migrarEquipa = (deps?: Departamento[]) => deps?.map((d) => (d.nome === 'Imagem' ? { ...d, nome: 'Fotografia' } : d));
 export const preenchidos = (deps: Departamento[]) => deps.reduce((n, d) => n + d.membros.filter((m) => m.nome.trim()).length, 0);
 
 const cel = (s: string) => `"${(s || '').replace(/"/g, '""').replace(/\r?\n/g, ' ')}"`;

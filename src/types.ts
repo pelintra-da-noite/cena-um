@@ -21,7 +21,9 @@ export interface PersonagemInfo {
   nome: string; // sempre em maiúsculas
   descricao: string;
   manual: boolean; // acrescentada à mão (pode não ter falas)
+  cenas?: Record<string, AjusteCena>; // correções à mão, por id de cena: o que o utilizador diz manda sobre o que o programa deteta
 }
+export type AjusteCena = 'fala' | 'sem' | 'fora';
 
 export type CategoriaLevantamento =
   'figurantes' | 'aderecos' | 'guardaRoupa' | 'caracterizacao' | 'cenografia' | 'veiculos' | 'animais' | 'efeitos' | 'som' | 'notas';

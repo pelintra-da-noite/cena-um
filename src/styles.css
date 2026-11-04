@@ -60,6 +60,8 @@ input, textarea, select { font-family: inherit; font-size: inherit; }
 ::-webkit-scrollbar { width: 12px; height: 12px; }
 ::-webkit-scrollbar-thumb { background: var(--borda-forte); border-radius: 6px; border: 3px solid transparent; background-clip: padding-box; }
 ::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-corner { background: transparent; }
+::-webkit-resizer { background: linear-gradient(135deg, transparent 0 58%, var(--borda-forte) 58% 64%, transparent 64% 76%, var(--borda-forte) 76% 82%, transparent 82%); }
 
 .app { height: 100%; display: flex; flex-direction: column; }
 
@@ -145,9 +147,11 @@ input, textarea, select { font-family: inherit; font-size: inherit; }
 .grupo-elementos { display: flex; gap: 2px; background: var(--fundo-3); border: 1px solid var(--linha-2); border-radius: 9px; padding: 3px; }
 .grupo-elementos button {
   height: 30px; padding: 0 10px; border: 0; border-radius: 6px; background: transparent; color: var(--texto-2); font-size: 12px;
+  font-weight: 500;
 }
 .grupo-elementos button:hover { background: var(--superficie); color: var(--texto); }
-.grupo-elementos button.ativo { background: var(--ambar); color: var(--ambar-tinta); font-weight: 600; }
+/* o ativo não muda de peso de letra (mudava a largura e a barra mexia); o realce faz-se com cor e uma sombra fina */
+.grupo-elementos button.ativo { background: var(--ambar); color: var(--ambar-tinta); text-shadow: .35px 0 0 currentColor; }
 .dica-teclas { color: var(--texto-4); font-size: 12px; margin-left: 8px; white-space: nowrap; }
 .flex1 { flex: 1; }
 
@@ -492,7 +496,7 @@ input.nome-ato:focus { border-color: var(--ambar); background: var(--fundo-1); }
 @media (max-width: 1380px) { .dica-teclas { display: none; } }
 
 /* Impressão do guião técnico */
-.impressao .pagina.paisagem { padding: 0; width: auto; height: auto; overflow: visible; font-family: var(--ui); font-size: 9pt; line-height: 1.35; }
+.impressao .pagina.paisagem { padding: .5in; box-decoration-break: clone; -webkit-box-decoration-break: clone; width: auto; height: auto; overflow: visible; font-family: var(--ui); font-size: 9pt; line-height: 1.35; }
 .impressao .tp-cab { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1.5pt solid #000; padding-bottom: 6pt; margin-bottom: 10pt; }
 .impressao .tp-cab b { font-family: var(--guiao); font-size: 13pt; text-transform: uppercase; }
 .impressao .tp-cena { break-inside: avoid-page; margin-bottom: 14pt; }
@@ -736,6 +740,7 @@ input.nome-ato:focus { border-color: var(--ambar); background: var(--fundo-1); }
 .impressao .elenco .el-elenco { margin: 0 0 12pt; }
 
 /* Personagens — visão da série */
+.rolar-serie { flex: 1; min-height: 0; overflow-y: auto; padding: 16px 24px 24px; }
 .tabela-serie { display: flex; flex-direction: column; border: 1px solid var(--linha); border-radius: 14px; overflow: hidden; background: var(--fundo-2); }
 .ts-linha { display: grid; grid-template-columns: minmax(180px, 1.3fr) minmax(0, 2fr) minmax(0, 1.4fr) 70px 90px; gap: 14px; padding: 12px 16px; border-top: 1px solid var(--linha); align-items: start; font-size: 13px; }
 .ts-linha:first-child { border-top: 0; }
@@ -746,7 +751,8 @@ input.nome-ato:focus { border-color: var(--ambar); background: var(--fundo-1); }
 .tabela-serie .nota-rodape { padding: 10px 16px; margin: 0; border-top: 1px solid var(--linha); }
 
 /* Equipa */
-.eq-lista { display: flex; flex-direction: column; gap: 16px; }
+.eq-lista { flex: 1; min-height: 0; overflow-y: auto; padding: 16px 24px 24px; display: flex; flex-direction: column; gap: 16px; }
+.eq-dep { flex-shrink: 0; }
 .eq-dep { background: var(--fundo-2); border: 1px solid var(--linha); border-radius: 14px; padding: 12px 14px 8px; }
 .eq-dep-cab { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
 .eq-dep-nome { background: transparent; border: 1px solid transparent; border-radius: 6px; color: var(--texto); font: inherit; font-size: 15px; font-weight: 600; padding: 4px 6px; min-width: 0; width: 280px; }
@@ -765,3 +771,16 @@ input.nome-ato:focus { border-color: var(--ambar); background: var(--fundo-1); }
 .eq-novo { align-self: flex-start; }
 .eq-so { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--texto-3); white-space: nowrap; }
 .impressao .eq-titulo { font-family: var(--ui); }
+
+/* Personagens — cenas corrigidas à mão */
+.chip-editavel { display: inline-flex; align-items: center; padding: 0; overflow: hidden; }
+.chip-editavel button { border: 0; background: transparent; color: inherit; font: inherit; height: 100%; padding: 0 5px; }
+.chip-editavel .chip-x { width: 0; padding: 0; overflow: hidden; color: var(--texto-3); transition: width .12s; }
+.chip-editavel:hover .chip-x, .chip-editavel .chip-x:focus-visible { width: 16px; padding-right: 4px; }
+.chip-editavel .chip-x:hover { color: var(--erro); }
+.chip-editavel.mexido { border-color: rgba(230,168,74,.6); background: rgba(230,168,74,.10); color: var(--ambar); }
+.chip-mais { color: var(--texto-3); font-family: var(--ui); font-size: 14px; line-height: 1; background: transparent; }
+.chip-mais:hover { color: var(--ambar); }
+.chip-sel { height: 22px; border-radius: 6px; border: 1px solid var(--ambar); background: var(--fundo-1); color: var(--texto); font-size: 11px; max-width: 220px; }
+.cp-repor { align-self: flex-start; font-size: 12px; }
+.impressao .tp-cena h3 { break-after: avoid; }

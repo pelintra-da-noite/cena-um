@@ -74,11 +74,11 @@ function renderUnidade(d: Dados) {
     const deps = d.equipa || [];
     return (
       <div className="impressao">
-        <style>{`@page { size: ${d.papel === 'carta' ? 'letter' : 'A4'} landscape; margin: .5in; } html, body, #root { height: auto; overflow: visible; background: #fff; }`}</style>
+        <style>{`@page { size: ${d.papel === 'carta' ? 'letter' : 'A4'} landscape; margin: 0; } :root { color-scheme: light; } html, body, #root { height: auto; overflow: visible; background: #fff !important; }`}</style>
         <section className="pagina paisagem">
           <div className="tp-cab"><b>{d.meta.titulo || 'Sem título'} — equipa</b><span>{deps.reduce((n, x) => n + x.membros.length, 0)} pessoas · {new Date().toLocaleDateString('pt-PT')}</span></div>
           {deps.map((dep) => (
-            <div key={dep.id} className="tp-cena">
+            <div key={dep.id} className="tp-cena" style={{ breakInside: 'auto' }}>
               <h3>{dep.nome}</h3>
               <table className="tp">
                 <thead><tr><th style={{ width: '20%' }}>Função</th><th style={{ width: '20%' }}>Nome</th><th style={{ width: '24%' }}>Contacto</th><th style={{ width: '18%' }}>Residência</th><th>Notas</th></tr></thead>
@@ -102,7 +102,7 @@ function renderUnidade(d: Dados) {
     cenas.forEach((c) => locais.set(c.local, [...(locais.get(c.local) || []), c]));
     return (
       <div className="impressao">
-        <style>{`@page { size: ${d.papel === 'carta' ? 'letter' : 'A4'} landscape; margin: .5in; } html, body, #root { height: auto; overflow: visible; background: #fff; }`}</style>
+        <style>{`@page { size: ${d.papel === 'carta' ? 'letter' : 'A4'} landscape; margin: 0; } :root { color-scheme: light; } html, body, #root { height: auto; overflow: visible; background: #fff !important; }`}</style>
         <section className="pagina paisagem">
           <div className="tp-cab"><b>{d.meta.titulo || 'Sem título'}{d.subtitulo ? ` · ${d.subtitulo}` : ''} — levantamento</b><span>{d.meta.autor} · {cenas.length} cenas · {formatarOitavos(cenas.reduce((x, c) => x + c.oitavos, 0))} páginas</span></div>
           <table className="tp">
@@ -161,7 +161,7 @@ function renderUnidade(d: Dados) {
     const titulo = (s: string) => s.toLowerCase().replace(/(^|\s)(\S)/g, (_m, a, b) => a + b.toUpperCase());
     return (
       <div className="impressao">
-        <style>{`@page { size: ${d.papel === 'carta' ? 'letter' : 'A4'} landscape; margin: .5in; } html, body, #root { height: auto; overflow: visible; background: #fff; }`}</style>
+        <style>{`@page { size: ${d.papel === 'carta' ? 'letter' : 'A4'} landscape; margin: 0; } :root { color-scheme: light; } html, body, #root { height: auto; overflow: visible; background: #fff !important; }`}</style>
         <section className="pagina paisagem" style={estilo}>
           <div className="tp-cab"><b>{d.meta.titulo || 'Sem título'}{d.subtitulo ? ` · ${d.subtitulo}` : ''} — guião técnico</b><span>{d.meta.autor}</span></div>
           {layout.cenas.map((c) => {
@@ -216,7 +216,7 @@ function renderUnidade(d: Dados) {
 
   return (
     <div className={'impressao' + (teatro ? ' teatro' : '')}>
-      <style>{`@page { size: ${d.papel === 'carta' ? 'letter' : 'A4'}; margin: 0; } html, body, #root { height: auto; overflow: visible; background: #fff; }`}</style>
+      <style>{`@page { size: ${d.papel === 'carta' ? 'letter' : 'A4'}; margin: 0; } :root { color-scheme: light; } html, body, #root { height: auto; overflow: visible; background: #fff !important; }`}</style>
       {d.rosto && (() => {
         const r = rostoDe(d.meta);
         const comCartazR = (d.cartaz || r.cartaz) && !!d.meta.cartaz;

@@ -7,7 +7,7 @@ import { deFdx, deFountain, paraFdx, paraFountain, validarDoc } from './io/forma
 import { reduzirImagem } from './io/imagens';
 import { paraCsv, levantamentoCsv } from './io/tecnico';
 import { rostoDe } from './io/rosto';
-import { equipaDe, equipaCsv } from './io/equipa';
+import { equipaDe, equipaCsv, migrarEquipa } from './io/equipa';
 import { sincronizar, migrarSerie, novoEpisodio, abrirEpisodio, ordenar, codigo, episodioAtivo } from './io/episodios';
 import Inicio from './screens/Inicio';
 import Editor from './screens/Editor';
@@ -68,7 +68,7 @@ export default function App() {
   }, []);
 
   const carregar = useCallback((p: Projeto, cam: string | null, sujo = false) => {
-    setProjeto(migrarSerie(p));
+    setProjeto((() => { const m = migrarSerie(p); return m.equipa ? { ...m, equipa: migrarEquipa(m.equipa) } : m; })());
     setCaminho(cam);
     setPorGuardar(sujo);
     setSessao((s) => s + 1);
