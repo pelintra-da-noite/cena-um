@@ -89,7 +89,20 @@
         "from": "TERCEIROS.txt",
         "to": "TERCEIROS.txt"
       }
-    ]
+    ],
+    "appx": {
+      "applicationId": "CenaUm",
+      "displayName": "Cena Um",
+      "publisherDisplayName": "Alexandre Serras",
+      "languages": [
+        "pt-PT",
+        "en-US"
+      ],
+      "backgroundColor": "transparent",
+      "showNameOnTiles": false,
+      "minVersion": "10.0.17763.0",
+      "artifactName": "Cena-Um-${version}-loja.${ext}"
+    }
   },
   "license": "GPL-3.0-only"
 }

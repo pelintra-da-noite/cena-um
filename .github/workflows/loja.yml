@@ -1,0 +1,47 @@
+# Gera o pacote do Cena Um para a Microsoft Store (.appx). A Store assina-o, por isso não é preciso certificado.
+# Como usar: separador "Actions" no GitHub → "Pacote para a Microsoft Store" → "Run workflow",
+# preenche os três valores de "Identidade do produto" do Partner Center e, no fim, descarrega o artefacto.
+name: Pacote para a Microsoft Store
+
+on:
+  workflow_dispatch:
+    inputs:
+      identidade:
+        description: "Package/Identity/Name (Partner Center → Identidade do produto)"
+        required: true
+      editor:
+        description: "Package/Identity/Publisher (começa por CN=)"
+        required: true
+      nome_editor:
+        description: "Package/Properties/PublisherDisplayName"
+        required: true
+
+jobs:
+  appx:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx tsc --noEmit
+      - run: npx vite build
+      - name: Criar o pacote
+        shell: pwsh
+        env:
+          IDENTIDADE: ${{ inputs.identidade }}
+          EDITOR: ${{ inputs.editor }}
+          NOME_EDITOR: ${{ inputs.nome_editor }}
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+        run: |
+          npx electron-builder --win appx --x64 `
+            "-c.appx.identityName=$env:IDENTIDADE" `
+            "-c.appx.publisher=$env:EDITOR" `
+            "-c.appx.publisherDisplayName=$env:NOME_EDITOR"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Cena-Um-loja
+          path: release/*.appx
+          if-no-files-found: error
