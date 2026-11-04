@@ -24,6 +24,23 @@
 !macro customWelcomePage
   Page custom CenaBoasVindas
 
+  ; Escolha da pasta: só numa instalação nova. Ao atualizar ou reparar, usa a pasta onde já está.
+  !define MUI_PAGE_CUSTOMFUNCTION_PRE CenaPastaPre
+  !define MUI_PAGE_CUSTOMFUNCTION_SHOW CenaPastaMostrar
+  !define MUI_DIRECTORYPAGE_TEXT_TOP "O Cena Um vai ser instalado na pasta abaixo. Para escolher outra, carrega em Procurar."
+  !insertmacro MUI_PAGE_DIRECTORY
+
+Function CenaPastaPre
+  ${If} $CenaVersaoInstalada != ""
+    Abort
+  ${EndIf}
+FunctionEnd
+
+Function CenaPastaMostrar
+  GetDlgItem $0 $HWNDPARENT 1
+  SendMessage $0 ${WM_SETTEXT} 0 "STR:Instalar"
+FunctionEnd
+
 Function CenaBoasVindas
   ReadRegStr $CenaVersaoInstalada HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${UNINSTALL_APP_KEY}" "DisplayVersion"
   ${If} $CenaVersaoInstalada == ""
@@ -34,7 +51,7 @@ Function CenaBoasVindas
     StrCpy $CenaTitulo "Instalar o Cena Um ${VERSION}"
     StrCpy $CenaSubtitulo "Escrita de guiões para cinema, televisão e teatro."
     StrCpy $CenaTexto "Este assistente vai instalar o Cena Um no teu computador.$\r$\n$\r$\nNo fim, encontras o programa no menu Iniciar e no ambiente de trabalho."
-    StrCpy $CenaBotao "Instalar"
+    StrCpy $CenaBotao "Seguinte"
   ${Else}
     ${VersionCompare} "$CenaVersaoInstalada" "${VERSION}" $R0
     ${If} $R0 == "0"
@@ -68,5 +85,20 @@ Function CenaBoasVindas
   SendMessage $2 ${WM_SETTEXT} 0 "STR:$CenaBotao"
 
   nsDialogs::Show
+FunctionEnd
+!macroend
+
+; Antes de copiar os ficheiros: garante que a pasta escolhida termina em "Cena Um"
+; (se a pessoa escolher C:\Programas, instala em C:\Programas\Cena Um)
+!macro customPageAfterChangeDir
+  !include StrContains.nsh
+  Page custom CenaPastaFinal
+
+Function CenaPastaFinal
+  ${StrContains} $0 "${APP_FILENAME}" $INSTDIR
+  ${If} $0 == ""
+    StrCpy $INSTDIR "$INSTDIR\${APP_FILENAME}"
+  ${EndIf}
+  Abort
 FunctionEnd
 !macroend
